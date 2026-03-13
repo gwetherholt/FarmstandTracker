@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Order } from '../types'
 import { calculatePrepSummary } from '../utils/pricing'
 
@@ -5,7 +6,7 @@ interface Props {
   orders: Order[]
 }
 
-export default function PrepSummary({ orders }: Props) {
+export default memo(function PrepSummary({ orders }: Props) {
   const summary = calculatePrepSummary(orders)
 
   if (orders.length === 0) {
@@ -56,4 +57,4 @@ export default function PrepSummary({ orders }: Props) {
       )}
     </div>
   )
-}
+})

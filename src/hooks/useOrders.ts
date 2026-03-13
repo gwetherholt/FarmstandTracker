@@ -21,37 +21,37 @@ export function usePastSundays() {
   }, [], [])
 }
 
-export async function addOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
+/** Fire-and-forget: returns immediately, DB write happens in background */
+export function addOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
   const now = new Date().toISOString()
-  const id = await db.orders.add({
+  db.orders.add({
     ...order,
     createdAt: now,
     updatedAt: now,
+  }).then(() => {
+    // Upsert customer in background — don't block anything
+    db.customers.where('name').equalsIgnoreCase(order.customerName).first().then((existing) => {
+      if (existing) {
+        db.customers.update(existing.id!, { lastOrderDate: order.sundayDate })
+      } else {
+        db.customers.add({ name: order.customerName, lastOrderDate: order.sundayDate })
+      }
+    })
   })
-
-  // Upsert customer
-  const existing = await db.customers.where('name').equalsIgnoreCase(order.customerName).first()
-  if (existing) {
-    await db.customers.update(existing.id!, { lastOrderDate: order.sundayDate })
-  } else {
-    await db.customers.add({ name: order.customerName, lastOrderDate: order.sundayDate })
-  }
-
-  return id
 }
 
-export async function updateOrder(id: number, changes: Partial<Order>) {
-  await db.orders.update(id, { ...changes, updatedAt: new Date().toISOString() })
+export function updateOrder(id: number, changes: Partial<Order>) {
+  db.orders.update(id, { ...changes, updatedAt: new Date().toISOString() })
 }
 
-export async function deleteOrder(id: number) {
-  await db.orders.delete(id)
+export function deleteOrder(id: number) {
+  db.orders.delete(id)
 }
 
-export async function togglePickedUp(id: number, current: boolean) {
-  await updateOrder(id, { pickedUp: !current })
+export function togglePickedUp(id: number, current: boolean) {
+  updateOrder(id, { pickedUp: !current })
 }
 
-export async function toggleCartonReturn(id: number, current: boolean) {
-  await updateOrder(id, { cartonReturn: !current })
+export function toggleCartonReturn(id: number, current: boolean) {
+  updateOrder(id, { cartonReturn: !current })
 }

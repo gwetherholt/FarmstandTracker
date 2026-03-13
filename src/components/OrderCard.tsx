@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState, useCallback } from 'react'
 import type { Order } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
 import { togglePickedUp, toggleCartonReturn, deleteOrder } from '../hooks/useOrders'
@@ -8,15 +8,15 @@ interface Props {
   onEdit: (order: Order) => void
 }
 
-export default function OrderCard({ order, onEdit }: Props) {
+export default memo(function OrderCard({ order, onEdit }: Props) {
   const [showActions, setShowActions] = useState(false)
   const total = calculateOrderTotal(order.items, order.cartonReturn)
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(() => {
     if (confirm(`Delete order for ${order.customerName}?`)) {
-      await deleteOrder(order.id!)
+      deleteOrder(order.id!)
     }
-  }
+  }, [order.id, order.customerName])
 
   return (
     <div
@@ -62,7 +62,7 @@ export default function OrderCard({ order, onEdit }: Props) {
               e.stopPropagation()
               togglePickedUp(order.id!, order.pickedUp)
             }}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
               order.pickedUp
                 ? 'bg-sage/20 text-sage'
                 : 'bg-olive/10 text-olive-dark'
@@ -75,7 +75,7 @@ export default function OrderCard({ order, onEdit }: Props) {
               e.stopPropagation()
               toggleCartonReturn(order.id!, order.cartonReturn)
             }}
-            className={`py-2 px-3 rounded-lg text-sm transition-colors ${
+            className={`py-2 px-3 rounded-lg text-sm transition-colors touch-manipulation ${
               order.cartonReturn
                 ? 'bg-amber/20 text-amber'
                 : 'bg-wood/5 text-wood/60'
@@ -93,7 +93,7 @@ export default function OrderCard({ order, onEdit }: Props) {
                 e.stopPropagation()
                 onEdit(order)
               }}
-              className="flex-1 py-2 bg-parchment text-wood-dark rounded-lg text-sm font-medium"
+              className="flex-1 py-2 bg-parchment text-wood-dark rounded-lg text-sm font-medium touch-manipulation"
             >
               Edit
             </button>
@@ -102,13 +102,13 @@ export default function OrderCard({ order, onEdit }: Props) {
                 e.stopPropagation()
                 handleDelete()
               }}
-              className="py-2 px-4 bg-barn/10 text-barn rounded-lg text-sm font-medium"
+              className="py-2 px-4 bg-barn/10 text-barn rounded-lg text-sm font-medium touch-manipulation"
             >
-              Delete
+              {'\u{1F5D1}\uFE0F'} Delete
             </button>
           </div>
         )}
       </div>
     </div>
   )
-}
+})

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { Order } from '../types'
 import { useOrdersBySunday } from '../hooks/useOrders'
 import PrepSummary from './PrepSummary'
@@ -11,18 +11,23 @@ interface Props {
 
 export default function SundayBoard({ sundayDate }: Props) {
   const orders = useOrdersBySunday(sundayDate)
-  const [showForm, setShowForm] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
 
-  const handleEdit = (order: Order) => {
+  const handleEdit = useCallback((order: Order) => {
     setEditingOrder(order)
-    setShowForm(true)
-  }
+    setFormOpen(true)
+  }, [])
 
-  const handleCloseForm = () => {
-    setShowForm(false)
+  const handleCloseForm = useCallback(() => {
+    setFormOpen(false)
     setEditingOrder(null)
-  }
+  }, [])
+
+  const handleOpenForm = useCallback(() => {
+    setEditingOrder(null)
+    setFormOpen(true)
+  }, [])
 
   return (
     <div className="space-y-4">
@@ -42,16 +47,17 @@ export default function SundayBoard({ sundayDate }: Props) {
         </div>
       )}
 
-      {/* FAB */}
+      {/* FAB — always responsive */}
       <button
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-olive text-cream rounded-full shadow-lg text-3xl flex items-center justify-center active:bg-olive-dark z-40"
+        onClick={handleOpenForm}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-olive text-cream rounded-full shadow-lg text-3xl flex items-center justify-center active:bg-olive-dark z-40 touch-manipulation select-none"
       >
         +
       </button>
 
-      {showForm && (
+      {formOpen && (
         <OrderForm
+          key={editingOrder?.id ?? 'new'}
           sundayDate={sundayDate}
           editingOrder={editingOrder}
           onClose={handleCloseForm}

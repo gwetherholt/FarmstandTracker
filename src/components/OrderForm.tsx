@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Order, OrderItem, PaymentMethod } from '../types'
 import { useCustomerNames } from '../hooks/useCustomers'
 import { addOrder, updateOrder } from '../hooks/useOrders'
@@ -7,47 +7,73 @@ import QuantityStepper from './QuantityStepper'
 
 interface Props {
   sundayDate: string
-  editingOrder?: Order | null
+  editingOrder: Order | null
   onClose: () => void
 }
+
+const EMPTY_ITEMS: OrderItem = { chicken: 0, duck: 0, goose: 0 }
 
 export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) {
   const customerNames = useCustomerNames()
   const nameRef = useRef<HTMLInputElement>(null)
 
-  const [name, setName] = useState(editingOrder?.customerName ?? '')
-  const [items, setItems] = useState<OrderItem>(
-    editingOrder?.items ?? { chicken: 0, duck: 0, goose: 0 }
-  )
-  const [notes, setNotes] = useState(editingOrder?.notes ?? '')
-  const [payment, setPayment] = useState<PaymentMethod>(editingOrder?.paymentMethod ?? 'lockbox')
-  const [cartonReturn, setCartonReturn] = useState(editingOrder?.cartonReturn ?? false)
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [name, setName] = useState('')
+  const [items, setItems] = useState<OrderItem>(EMPTY_ITEMS)
+  const [notes, setNotes] = useState('')
+  const [payment, setPayment] = useState<PaymentMethod>('lockbox')
+  const [cartonReturn, setCartonReturn] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingOrder) {
+      setName(editingOrder.customerName)
+      setItems({ ...editingOrder.items })
+      setNotes(editingOrder.notes)
+      setPayment(editingOrder.paymentMethod)
+      setCartonReturn(editingOrder.cartonReturn)
+    }
+  }, [editingOrder])
 
   useEffect(() => {
-    nameRef.current?.focus()
+    // Small delay to let the bottom sheet animate in before focusing
+    const t = setTimeout(() => nameRef.current?.focus(), 100)
+    return () => clearTimeout(t)
   }, [])
 
   const total = calculateOrderTotal(items, cartonReturn)
   const hasItems = items.chicken > 0 || items.duck > 0 || items.goose > 0
 
-  const handleNameChange = (val: string) => {
-    setName(val)
-    if (val.length > 0) {
-      const filtered = customerNames.filter((n) =>
-        n.toLowerCase().includes(val.toLowerCase())
-      )
-      setSuggestions(filtered.slice(0, 5))
-    } else {
-      setSuggestions([])
-    }
-  }
+  // Memoize filtered suggestions — only recomputes when name or customer list changes
+  const suggestions = useMemo(() => {
+    if (name.length === 0) return []
+    const lower = name.toLowerCase()
+    return customerNames.filter((n) => n.toLowerCase().includes(lower)).slice(0, 5)
+  }, [name, customerNames])
 
-  const handleSubmit = async () => {
+  const handleNameChange = useCallback((val: string) => {
+    setName(val)
+    setShowSuggestions(val.length > 0)
+  }, [])
+
+  const selectSuggestion = useCallback((s: string) => {
+    setName(s)
+    setShowSuggestions(false)
+  }, [])
+
+  // Stable callbacks for steppers so they don't cause re-renders
+  const setChicken = useCallback((v: number) => setItems((prev) => ({ ...prev, chicken: v })), [])
+  const setDuck = useCallback((v: number) => setItems((prev) => ({ ...prev, duck: v })), [])
+  const setGoose = useCallback((v: number) => setItems((prev) => ({ ...prev, goose: v })), [])
+
+  const handleSubmit = () => {
     if (!name.trim() || !hasItems) return
 
+    // Close immediately (optimistic) — DB write is fire-and-forget
+    onClose()
+
     if (editingOrder?.id) {
-      await updateOrder(editingOrder.id, {
+      updateOrder(editingOrder.id, {
         customerName: name.trim(),
         items,
         notes,
@@ -55,7 +81,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         cartonReturn,
       })
     } else {
-      await addOrder({
+      addOrder({
         sundayDate,
         customerName: name.trim(),
         items,
@@ -65,19 +91,18 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         pickedUp: false,
       })
     }
-    onClose()
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full max-w-lg bg-cream rounded-t-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-cream px-4 pt-4 pb-2 border-b border-wood/10">
+        <div className="sticky top-0 bg-cream px-4 pt-4 pb-2 border-b border-wood/10 z-10">
           <div className="flex items-center justify-between">
             <h2 className="font-serif text-xl text-wood-dark font-bold">
               {editingOrder ? 'Edit Order' : 'New Order'}
             </h2>
-            <button onClick={onClose} className="text-wood text-2xl leading-none p-1">&times;</button>
+            <button onClick={onClose} className="text-wood text-2xl leading-none p-2 touch-manipulation">&times;</button>
           </div>
         </div>
 
@@ -90,21 +115,25 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               type="text"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
+              onBlur={() => {
+                // Delay hiding so tap on suggestion registers
+                setTimeout(() => setShowSuggestions(false), 150)
+              }}
+              onFocus={() => { if (name.length > 0) setShowSuggestions(true) }}
               placeholder="Customer name"
               className="w-full px-3 py-3 rounded-lg border border-wood/20 bg-white text-wood-dark text-lg focus:outline-none focus:ring-2 focus:ring-olive/40"
               autoComplete="off"
+              enterKeyHint="next"
             />
-            {suggestions.length > 0 && name.length > 0 && (
+            {showSuggestions && suggestions.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-wood/20 rounded-lg shadow-lg overflow-hidden">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    className="w-full text-left px-3 py-2 text-wood-dark hover:bg-parchment"
-                    onClick={() => {
-                      setName(s)
-                      setSuggestions([])
-                    }}
+                    className="w-full text-left px-3 py-2 text-wood-dark hover:bg-parchment active:bg-parchment touch-manipulation"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectSuggestion(s)}
                   >
                     {s}
                   </button>
@@ -122,21 +151,21 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
                 emoji={'\u{1F414}'}
                 price={PRICES.chicken}
                 value={items.chicken}
-                onChange={(v) => setItems({ ...items, chicken: v })}
+                onChange={setChicken}
               />
               <QuantityStepper
                 label="Duck Eggs"
                 emoji={'\u{1F986}'}
                 price={PRICES.duck}
                 value={items.duck}
-                onChange={(v) => setItems({ ...items, duck: v })}
+                onChange={setDuck}
               />
               <QuantityStepper
                 label="Fertile Goose Eggs"
                 emoji={'\u{1FABF}'}
                 price={PRICES.goose}
                 value={items.goose}
-                onChange={(v) => setItems({ ...items, goose: v })}
+                onChange={setGoose}
               />
             </div>
           </div>
@@ -148,7 +177,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               <button
                 type="button"
                 onClick={() => setPayment('lockbox')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
                   payment === 'lockbox'
                     ? 'bg-olive text-cream'
                     : 'bg-white border border-wood/20 text-wood'
@@ -159,7 +188,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               <button
                 type="button"
                 onClick={() => setPayment('venmo')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
                   payment === 'venmo'
                     ? 'bg-olive text-cream'
                     : 'bg-white border border-wood/20 text-wood'
@@ -171,7 +200,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
           </div>
 
           {/* Carton return */}
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 cursor-pointer touch-manipulation">
             <input
               type="checkbox"
               checked={cartonReturn}
@@ -192,18 +221,19 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. will pick up at noon"
               className="w-full px-3 py-2 rounded-lg border border-wood/20 bg-white text-wood-dark focus:outline-none focus:ring-2 focus:ring-olive/40"
+              enterKeyHint="done"
             />
           </div>
 
           {/* Total & Submit */}
-          <div className="flex items-center justify-between pt-2 border-t border-wood/20">
+          <div className="flex items-center justify-between pt-2 border-t border-wood/20 pb-2">
             <div className="text-lg font-serif font-bold text-olive-dark">
               Total: ${total}
             </div>
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || !hasItems}
-              className="px-6 py-3 bg-olive text-cream rounded-xl font-bold text-lg disabled:opacity-40 active:bg-olive-dark"
+              className="px-6 py-3 bg-olive text-cream rounded-xl font-bold text-lg disabled:opacity-40 active:bg-olive-dark touch-manipulation"
             >
               {editingOrder ? 'Update' : 'Add Order'}
             </button>
