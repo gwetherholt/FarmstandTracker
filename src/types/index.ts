@@ -24,3 +24,10 @@ export interface Customer {
   name: string
   lastOrderDate: string
 }
+
+export interface SundayNote {
+  id?: number
+  sundayDate: string // the Sunday this note is for
+  text: string
+  createdAt: string
+}

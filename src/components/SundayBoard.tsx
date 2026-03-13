@@ -4,6 +4,7 @@ import { useOrdersBySunday } from '../hooks/useOrders'
 import PrepSummary from './PrepSummary'
 import OrderCard from './OrderCard'
 import OrderForm from './OrderForm'
+import SundayNotes from './SundayNotes'
 
 interface Props {
   sundayDate: string
@@ -46,6 +47,8 @@ export default function SundayBoard({ sundayDate }: Props) {
           <p className="text-sm text-wood/40 mt-1">Tap + to add one</p>
         </div>
       )}
+
+      <SundayNotes sundayDate={sundayDate} />
 
       {/* FAB — always responsive */}
       <button
