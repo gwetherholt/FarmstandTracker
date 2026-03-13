@@ -3,7 +3,7 @@ import type { OrderItem } from '../types'
 export const PRICES = {
   chicken: 2, // per half-dozen
   duck: 3,
-  goose: 6,
+  goose: 4,
 } as const
 
 export const CARTON_DISCOUNT = 1

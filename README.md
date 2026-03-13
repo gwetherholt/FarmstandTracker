@@ -22,7 +22,7 @@ _Coming soon_
 |---------|---------------------|
 | Rainbow Chicken Eggs | $2 |
 | Duck Eggs | $3 |
-| Fertile Goose Eggs | $6 |
+| Fertile Goose Eggs | $4 |
 
 ## Getting Started
 
