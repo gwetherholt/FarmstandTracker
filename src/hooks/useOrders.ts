@@ -52,6 +52,3 @@ export function togglePickedUp(id: number, current: boolean) {
   updateOrder(id, { pickedUp: !current })
 }
 
-export function toggleCartonReturn(id: number, current: boolean) {
-  updateOrder(id, { cartonReturn: !current })
-}

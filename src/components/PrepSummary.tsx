@@ -50,11 +50,6 @@ export default memo(function PrepSummary({ orders }: Props) {
         </span>
         <span className="font-bold text-olive-dark">${summary.revenue}</span>
       </div>
-      {summary.cartonsReturned > 0 && (
-        <div className="text-xs text-wood">
-          {'\u267B\uFE0F'} {summary.cartonsReturned} carton{summary.cartonsReturned !== 1 ? 's' : ''} returned (-${summary.cartonsReturned})
-        </div>
-      )}
     </div>
   )
 })

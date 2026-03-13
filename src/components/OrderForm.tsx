@@ -21,7 +21,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
   const [items, setItems] = useState<OrderItem>(EMPTY_ITEMS)
   const [notes, setNotes] = useState('')
   const [payment, setPayment] = useState<PaymentMethod>('lockbox')
-  const [cartonReturn, setCartonReturn] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Populate form when editing
@@ -31,20 +30,17 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
       setItems({ ...editingOrder.items })
       setNotes(editingOrder.notes)
       setPayment(editingOrder.paymentMethod)
-      setCartonReturn(editingOrder.cartonReturn)
     }
   }, [editingOrder])
 
   useEffect(() => {
-    // Small delay to let the bottom sheet animate in before focusing
     const t = setTimeout(() => nameRef.current?.focus(), 100)
     return () => clearTimeout(t)
   }, [])
 
-  const total = calculateOrderTotal(items, cartonReturn)
+  const total = calculateOrderTotal(items)
   const hasItems = items.chicken > 0 || items.duck > 0 || items.goose > 0
 
-  // Memoize filtered suggestions — only recomputes when name or customer list changes
   const suggestions = useMemo(() => {
     if (name.length === 0) return []
     const lower = name.toLowerCase()
@@ -61,7 +57,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
     setShowSuggestions(false)
   }, [])
 
-  // Stable callbacks for steppers so they don't cause re-renders
   const setChicken = useCallback((v: number) => setItems((prev) => ({ ...prev, chicken: v })), [])
   const setDuck = useCallback((v: number) => setItems((prev) => ({ ...prev, duck: v })), [])
   const setGoose = useCallback((v: number) => setItems((prev) => ({ ...prev, goose: v })), [])
@@ -69,7 +64,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
   const handleSubmit = () => {
     if (!name.trim() || !hasItems) return
 
-    // Close immediately (optimistic) — DB write is fire-and-forget
     onClose()
 
     if (editingOrder?.id) {
@@ -78,7 +72,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         items,
         notes,
         paymentMethod: payment,
-        cartonReturn,
       })
     } else {
       addOrder({
@@ -87,7 +80,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         items,
         notes,
         paymentMethod: payment,
-        cartonReturn,
+        cartonReturn: false,
         pickedUp: false,
       })
     }
@@ -116,7 +109,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               onBlur={() => {
-                // Delay hiding so tap on suggestion registers
                 setTimeout(() => setShowSuggestions(false), 150)
               }}
               onFocus={() => { if (name.length > 0) setShowSuggestions(true) }}
@@ -198,19 +190,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               </button>
             </div>
           </div>
-
-          {/* Carton return */}
-          <label className="flex items-center gap-3 cursor-pointer touch-manipulation">
-            <input
-              type="checkbox"
-              checked={cartonReturn}
-              onChange={(e) => setCartonReturn(e.target.checked)}
-              className="w-5 h-5 rounded border-wood/30 text-olive focus:ring-olive"
-            />
-            <span className="text-sm text-wood-dark">
-              {'\u267B\uFE0F'} Returned clean carton (-$1)
-            </span>
-          </label>
 
           {/* Notes */}
           <div>

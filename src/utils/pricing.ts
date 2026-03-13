@@ -6,17 +6,15 @@ export const PRICES = {
   goose: 4,
 } as const
 
-export const CARTON_DISCOUNT = 1
-
-export function calculateOrderTotal(items: OrderItem, cartonReturn: boolean): number {
-  const subtotal =
+export function calculateOrderTotal(items: OrderItem): number {
+  return (
     items.chicken * PRICES.chicken +
     items.duck * PRICES.duck +
     items.goose * PRICES.goose
-  return cartonReturn ? Math.max(0, subtotal - CARTON_DISCOUNT) : subtotal
+  )
 }
 
-export function calculatePrepSummary(orders: { items: OrderItem; cartonReturn: boolean; pickedUp: boolean }[]) {
+export function calculatePrepSummary(orders: { items: OrderItem; pickedUp: boolean }[]) {
   const totals = {
     chickenHalfDoz: 0,
     duckHalfDoz: 0,
@@ -24,16 +22,14 @@ export function calculatePrepSummary(orders: { items: OrderItem; cartonReturn: b
     revenue: 0,
     orderCount: orders.length,
     pickedUpCount: 0,
-    cartonsReturned: 0,
   }
 
   for (const order of orders) {
     totals.chickenHalfDoz += order.items.chicken
     totals.duckHalfDoz += order.items.duck
     totals.gooseHalfDoz += order.items.goose
-    totals.revenue += calculateOrderTotal(order.items, order.cartonReturn)
+    totals.revenue += calculateOrderTotal(order.items)
     if (order.pickedUp) totals.pickedUpCount++
-    if (order.cartonReturn) totals.cartonsReturned++
   }
 
   return {
