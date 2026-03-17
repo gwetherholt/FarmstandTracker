@@ -11,13 +11,6 @@ interface Props {
   onBack: () => void
 }
 
-function formatTime(hour: number, minute: number): string {
-  const h = hour % 12 || 12
-  const m = minute.toString().padStart(2, '0')
-  const ampm = hour < 12 ? 'AM' : 'PM'
-  return `${h}:${m} ${ampm}`
-}
-
 function TimeInput({
   label,
   hour,
