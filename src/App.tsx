@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { getNextSunday, toDateString, formatSundayLabel, formatShortDate, getRelativeLabel } from './utils/dates'
+import { getNextSunday, toDateString, formatShortDate, getRelativeLabel } from './utils/dates'
 import { useClosedSundaySet } from './hooks/useClosedSundays'
 import { useNotificationScheduler } from './hooks/useNotifications'
 import SundayBoard from './components/SundayBoard'
