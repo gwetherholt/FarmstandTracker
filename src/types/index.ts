@@ -60,3 +60,14 @@ export interface ChecklistItem {
   isDefault: boolean
   createdAt: string
 }
+
+export interface NotificationSettings {
+  key: 'settings' // single-row primary key
+  enabled: boolean
+  sundayHour: number   // 0-23, default 7
+  sundayMinute: number // 0-59, default 0
+  saturdayHour: number   // 0-23, default 18
+  saturdayMinute: number // 0-59, default 0
+  lastSundayFired: string | null  // ISO date of last Sunday reminder fired
+  lastSaturdayFired: string | null // ISO date of last Saturday reminder fired
+}

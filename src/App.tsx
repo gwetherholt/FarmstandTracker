@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react'
 import { getNextSunday, toDateString, formatSundayLabel } from './utils/dates'
 import { useClosedSundaySet } from './hooks/useClosedSundays'
+import { useNotificationScheduler } from './hooks/useNotifications'
 import SundayBoard from './components/SundayBoard'
 import History from './components/History'
+import Settings from './components/Settings'
 
-type View = 'current' | 'history'
+type View = 'current' | 'history' | 'settings'
 
 /** Get a Sunday date string offset by N weeks from the base Sunday */
 function getSundayByOffset(baseSunday: string, offset: number): string {
@@ -17,6 +19,9 @@ export default function App() {
   const [view, setView] = useState<View>('current')
   const [weekOffset, setWeekOffset] = useState(0)
   const closedSet = useClosedSundaySet()
+
+  // Start notification scheduler
+  useNotificationScheduler()
 
   const baseSunday = toDateString(getNextSunday())
   const activeSunday = getSundayByOffset(baseSunday, weekOffset)
@@ -39,6 +44,16 @@ export default function App() {
     )
   }
 
+  if (view === 'settings') {
+    return (
+      <div className="min-h-screen bg-cream">
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <Settings onBack={() => setView('current')} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-lg mx-auto">
@@ -51,12 +66,20 @@ export default function App() {
               </h1>
               <h2 className="font-serif text-lg text-olive -mt-1">Farm Stand</h2>
             </div>
-            <button
-              onClick={() => setView('history')}
-              className="text-sm text-olive-dark font-medium px-3 py-1.5 rounded-lg bg-parchment"
-            >
-              History
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView('settings')}
+                className="text-sm text-olive-dark font-medium px-3 py-1.5 rounded-lg bg-parchment"
+              >
+                {'\u2699\uFE0F'}
+              </button>
+              <button
+                onClick={() => setView('history')}
+                className="text-sm text-olive-dark font-medium px-3 py-1.5 rounded-lg bg-parchment"
+              >
+                History
+              </button>
+            </div>
           </div>
         </header>
 

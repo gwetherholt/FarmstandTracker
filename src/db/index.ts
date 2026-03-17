@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Order, Customer, SundayNote, ClosedSunday, SoldOutSunday, ChecklistItem } from '../types'
+import type { Order, Customer, SundayNote, ClosedSunday, SoldOutSunday, ChecklistItem, NotificationSettings } from '../types'
 
 class FarmStandDB extends Dexie {
   orders!: Table<Order, number>
@@ -8,6 +8,7 @@ class FarmStandDB extends Dexie {
   closedSundays!: Table<ClosedSunday, string>
   soldOutSundays!: Table<SoldOutSunday, string>
   checklist!: Table<ChecklistItem, number>
+  notificationSettings!: Table<NotificationSettings, string>
 
   constructor() {
     super('farmstand')
@@ -53,6 +54,16 @@ class FarmStandDB extends Dexie {
       closedSundays: 'sundayDate',
       soldOutSundays: 'sundayDate',
       checklist: '++id, sundayDate',
+    })
+    // v7: notification settings
+    this.version(7).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+      closedSundays: 'sundayDate',
+      soldOutSundays: 'sundayDate',
+      checklist: '++id, sundayDate',
+      notificationSettings: 'key',
     })
   }
 }
