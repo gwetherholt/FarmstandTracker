@@ -2,6 +2,7 @@ import { memo, useState, useCallback } from 'react'
 import type { Order, ContactSource } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
 import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
+import { EggDot } from './EggIcons'
 
 const CONTACT_DISPLAY: Record<ContactSource, { icon: string; label: string }> = {
   instagram: { icon: '\u{1F4F7}', label: 'IG' },
@@ -36,7 +37,7 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0" onClick={() => onEdit(order)}>
             <div className="flex items-center gap-2">
-              <h4 className={`font-serif text-lg font-semibold truncate ${
+              <h4 className={`font-hand text-xl font-bold truncate ${
                 order.pickedUp ? 'text-sage line-through' : 'text-wood-dark'
               }`}>
                 {order.customerName}
@@ -49,13 +50,13 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-wood">
               {order.items.chicken > 0 && (
-                <span>{'\u{1F414}'} {order.items.chicken} &times; half-doz</span>
+                <span><EggDot type="chicken" /> {order.items.chicken} &times; half-doz</span>
               )}
               {order.items.duck > 0 && (
-                <span>{'\u{1F986}'} {order.items.duck} &times; half-doz</span>
+                <span><EggDot type="duck" /> {order.items.duck} &times; half-doz</span>
               )}
               {order.items.goose > 0 && (
-                <span>{'\u{1FABF}'} {order.items.goose} &times; half-doz</span>
+                <span><EggDot type="goose" /> {order.items.goose} &times; half-doz</span>
               )}
             </div>
             {order.contactSource && (

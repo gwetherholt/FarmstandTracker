@@ -15,8 +15,8 @@ export const NotesDisplay = memo(function NotesDisplay({ sundayDate }: { sundayD
 
   return (
     <div className="bg-amber-light/30 border border-amber/30 rounded-xl p-3 space-y-1.5">
-      <h4 className="text-xs font-semibold text-wood-dark uppercase tracking-wide flex items-center gap-1.5">
-        <span className="text-sm">{'\u{1F4CC}'}</span> Reminders
+      <h4 className="font-hand text-lg font-bold text-wood-dark flex items-center gap-1.5">
+        {'\u{1F4CC}'} Reminders
       </h4>
       {notes.map((note) => (
         <div key={note.id} className="flex items-start gap-2">
@@ -63,7 +63,7 @@ export const AddNotes = memo(function AddNotes({ targetSundayDate }: AddNotesPro
         onClick={() => setExpanded(!expanded)}
         className="w-full px-4 py-3 flex items-center justify-between touch-manipulation"
       >
-        <span className="font-serif text-sm font-semibold text-wood-dark">
+        <span className="font-hand text-lg font-bold text-wood-dark">
           {'\u{1F4DD}'} Notes for Next Week
           {notes.length > 0 && (
             <span className="ml-2 text-xs font-sans font-normal text-wood/60">

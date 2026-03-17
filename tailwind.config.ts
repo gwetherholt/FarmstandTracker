@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream: '#FAFAF8',
+        cream: '#FAF8F4',
         parchment: '#F0EDE6',
         wood: '#78716C',
         'wood-dark': '#3D3929',
@@ -19,6 +19,7 @@ export default {
       fontFamily: {
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        hand: ['Caveat', 'cursive'],
       },
     },
   },

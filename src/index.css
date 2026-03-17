@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,12 +11,41 @@ html {
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #FAFAF8;
+  background-color: #FAF8F4;
   color: #3D3929;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
 }
 
+/* Subtle linen/craft paper texture — pure CSS */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #FAF8F4;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 115, 85, 0.018) 2px,
+      rgba(139, 115, 85, 0.018) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(139, 115, 85, 0.015) 3px,
+      rgba(139, 115, 85, 0.015) 4px
+    );
+}
+
 input[type="checkbox"] {
   accent-color: #5B7A3D;
+}
+
+/* Handwritten font class */
+.font-hand {
+  font-family: 'Caveat', cursive;
 }

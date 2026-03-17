@@ -120,7 +120,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
       <div className="relative w-full max-w-lg bg-cream rounded-t-2xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-cream px-4 pt-4 pb-2 border-b border-wood/10 z-10">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-xl text-wood-dark font-bold">
+            <h2 className="font-hand text-2xl text-wood-dark font-bold">
               {editingOrder ? 'Edit Order' : 'New Order'}
             </h2>
             <button onClick={onClose} className="text-wood text-2xl leading-none p-2 touch-manipulation">&times;</button>

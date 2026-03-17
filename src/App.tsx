@@ -5,6 +5,7 @@ import { useNotificationScheduler } from './hooks/useNotifications'
 import SundayBoard from './components/SundayBoard'
 import History from './components/History'
 import Settings from './components/Settings'
+import FarmHeader from './components/FarmHeader'
 
 type View = 'current' | 'history' | 'settings'
 
@@ -57,31 +58,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-lg mx-auto">
-        {/* Header */}
-        <header className="px-4 pt-6 pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-serif text-2xl font-bold text-wood-dark">
-                Port Orchard
-              </h1>
-              <h2 className="font-serif text-lg text-olive -mt-1">Farm Stand</h2>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setView('settings')}
-                className="text-sm text-olive-dark font-medium px-3 py-1.5 rounded-lg bg-parchment"
-              >
-                {'\u2699\uFE0F'}
-              </button>
-              <button
-                onClick={() => setView('history')}
-                className="text-sm text-olive-dark font-medium px-3 py-1.5 rounded-lg bg-parchment"
-              >
-                History
-              </button>
-            </div>
-          </div>
-        </header>
+        <FarmHeader
+          onSettings={() => setView('settings')}
+          onHistory={() => setView('history')}
+        />
 
         {/* Sunday navigation */}
         <div className="px-4 mb-4">
@@ -109,7 +89,7 @@ export default function App() {
 
             {/* Current Sunday (active) */}
             <div
-              className={`flex-[1.4] py-2.5 rounded-lg text-sm font-semibold text-center shadow-sm truncate ${
+              className={`flex-[1.4] py-2.5 rounded-lg text-center shadow-sm truncate font-hand text-lg font-bold ${
                 closedSet.has(activeSunday)
                   ? 'bg-white/80 text-wood/40 line-through'
                   : 'bg-white text-wood-dark'

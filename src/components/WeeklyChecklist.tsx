@@ -39,8 +39,8 @@ export default memo(function WeeklyChecklist({ sundayDate }: Props) {
   return (
     <div className="bg-white rounded-xl border border-wood/10 p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-wood-dark uppercase tracking-wide flex items-center gap-1.5">
-          <span className="text-sm">{'\u2611\uFE0F'}</span> Weekly Checklist
+        <h4 className="font-hand text-lg font-bold text-wood-dark flex items-center gap-1.5">
+          {'\u2611\uFE0F'} Weekly Checklist
         </h4>
         <span className="text-[11px] text-wood/40">
           {doneCount}/{items.length}
