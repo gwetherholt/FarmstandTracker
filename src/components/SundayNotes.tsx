@@ -7,26 +7,48 @@ const QUICK_NOTES = [
   'More cartons needed',
 ]
 
-interface Props {
-  sundayDate: string
+/** Display-only notes for the top of a Sunday board (sticky note style) */
+export const NotesDisplay = memo(function NotesDisplay({ sundayDate }: { sundayDate: string }) {
+  const notes = useNotesBySunday(sundayDate)
+
+  if (notes.length === 0) return null
+
+  return (
+    <div className="bg-amber-light/30 border border-amber/30 rounded-xl p-3 space-y-1.5">
+      <h4 className="text-xs font-semibold text-wood-dark uppercase tracking-wide flex items-center gap-1.5">
+        <span className="text-sm">{'\u{1F4CC}'}</span> Reminders
+      </h4>
+      {notes.map((note) => (
+        <div key={note.id} className="flex items-start gap-2">
+          <span className="text-amber mt-0.5 text-xs">{'\u25CF'}</span>
+          <span className="text-sm text-wood-dark">{note.text}</span>
+        </div>
+      ))}
+    </div>
+  )
+})
+
+interface AddNotesProps {
+  targetSundayDate: string
 }
 
-export default memo(function SundayNotes({ sundayDate }: Props) {
-  const notes = useNotesBySunday(sundayDate)
+/** Add-note section for the bottom of the current Sunday board */
+export const AddNotes = memo(function AddNotes({ targetSundayDate }: AddNotesProps) {
+  const notes = useNotesBySunday(targetSundayDate)
   const [input, setInput] = useState('')
   const [expanded, setExpanded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleAdd = useCallback(() => {
     if (!input.trim()) return
-    addNote(sundayDate, input)
+    addNote(targetSundayDate, input)
     setInput('')
     inputRef.current?.focus()
-  }, [sundayDate, input])
+  }, [targetSundayDate, input])
 
   const handleQuickAdd = useCallback((text: string) => {
-    addNote(sundayDate, text)
-  }, [sundayDate])
+    addNote(targetSundayDate, text)
+  }, [targetSundayDate])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -54,7 +76,7 @@ export default memo(function SundayNotes({ sundayDate }: Props) {
 
       {expanded && (
         <div className="px-4 pb-4 space-y-3">
-          {/* Existing notes */}
+          {/* Existing notes for next week (preview) */}
           {notes.length > 0 && (
             <div className="space-y-1.5">
               {notes.map((note) => (

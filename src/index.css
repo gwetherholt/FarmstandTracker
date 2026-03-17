@@ -11,12 +11,12 @@ html {
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #faf6ee;
-  color: #6b5740;
+  background-color: #FAFAF8;
+  color: #3D3929;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
 }
 
 input[type="checkbox"] {
-  accent-color: #78713f;
+  accent-color: #5B7A3D;
 }

@@ -20,7 +20,8 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
   const [name, setName] = useState('')
   const [items, setItems] = useState<OrderItem>(EMPTY_ITEMS)
   const [notes, setNotes] = useState('')
-  const [payment, setPayment] = useState<PaymentMethod>('lockbox')
+  const [payment, setPayment] = useState<PaymentMethod | null>(null)
+  const [showPayment, setShowPayment] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Populate form when editing
@@ -29,7 +30,8 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
       setName(editingOrder.customerName)
       setItems({ ...editingOrder.items })
       setNotes(editingOrder.notes)
-      setPayment(editingOrder.paymentMethod)
+      setPayment(editingOrder.paymentMethod ?? null)
+      setShowPayment(!!editingOrder.paymentMethod)
     }
   }, [editingOrder])
 
@@ -162,35 +164,6 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
             </div>
           </div>
 
-          {/* Payment */}
-          <div>
-            <label className="block text-sm font-medium text-wood mb-1">Payment</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPayment('lockbox')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
-                  payment === 'lockbox'
-                    ? 'bg-olive text-cream'
-                    : 'bg-white border border-wood/20 text-wood'
-                }`}
-              >
-                {'\u{1F4E6}'} Orange Lockbox
-              </button>
-              <button
-                type="button"
-                onClick={() => setPayment('venmo')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
-                  payment === 'venmo'
-                    ? 'bg-olive text-cream'
-                    : 'bg-white border border-wood/20 text-wood'
-                }`}
-              >
-                Venmo
-              </button>
-            </div>
-          </div>
-
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-wood mb-1">Notes (optional)</label>
@@ -203,6 +176,54 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               enterKeyHint="done"
             />
           </div>
+
+          {/* Payment — hidden by default */}
+          {!showPayment ? (
+            <button
+              type="button"
+              onClick={() => setShowPayment(true)}
+              className="text-sm text-olive hover:text-olive-dark underline underline-offset-2"
+            >
+              + Add payment method
+            </button>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-wood">Payment</label>
+                <button
+                  type="button"
+                  onClick={() => { setShowPayment(false); setPayment(null) }}
+                  className="text-xs text-wood/50 hover:text-wood"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayment('lockbox')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
+                    payment === 'lockbox'
+                      ? 'bg-olive text-cream'
+                      : 'bg-white border border-wood/20 text-wood'
+                  }`}
+                >
+                  {'\u{1F4E6}'} Orange Lockbox
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayment('venmo')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
+                    payment === 'venmo'
+                      ? 'bg-olive text-cream'
+                      : 'bg-white border border-wood/20 text-wood'
+                  }`}
+                >
+                  Venmo
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Total & Submit */}
           <div className="flex items-center justify-between pt-2 border-t border-wood/20 pb-2">

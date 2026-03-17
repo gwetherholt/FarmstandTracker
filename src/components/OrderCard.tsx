@@ -1,7 +1,7 @@
 import { memo, useState, useCallback } from 'react'
 import type { Order } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
-import { togglePickedUp, deleteOrder } from '../hooks/useOrders'
+import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
 
 interface Props {
   order: Order
@@ -26,11 +26,18 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0" onClick={() => onEdit(order)}>
-            <h4 className={`font-serif text-lg font-semibold truncate ${
-              order.pickedUp ? 'text-sage line-through' : 'text-wood-dark'
-            }`}>
-              {order.customerName}
-            </h4>
+            <div className="flex items-center gap-2">
+              <h4 className={`font-serif text-lg font-semibold truncate ${
+                order.pickedUp ? 'text-sage line-through' : 'text-wood-dark'
+              }`}>
+                {order.customerName}
+              </h4>
+              {order.sourceOrderId && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-olive/10 text-olive flex-shrink-0">
+                  {'\u{1F501}'} recurring
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-wood">
               {order.items.chicken > 0 && (
                 <span>{'\u{1F414}'} {order.items.chicken} &times; half-doz</span>
@@ -49,9 +56,11 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
           <div className="flex items-start gap-2 ml-3 flex-shrink-0">
             <div className="text-right">
               <div className="font-bold text-olive-dark text-lg">${total}</div>
-              <div className="text-xs text-wood/60">
-                {order.paymentMethod === 'venmo' ? 'Venmo' : 'Lockbox'}
-              </div>
+              {order.paymentMethod && (
+                <div className="text-xs text-wood/60">
+                  {order.paymentMethod === 'venmo' ? 'Venmo' : 'Lockbox'}
+                </div>
+              )}
             </div>
             <button
               onClick={() => setConfirming(true)}
@@ -73,6 +82,17 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
             }`}
           >
             {order.pickedUp ? '\u2705 Picked Up' : '\u{1F4E6} Mark Picked Up'}
+          </button>
+          <button
+            onClick={() => toggleRecurring(order.id!, !!order.recurring)}
+            className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
+              order.recurring
+                ? 'bg-olive/15 text-olive-dark'
+                : 'bg-wood/5 text-wood/50'
+            }`}
+            title={order.recurring ? 'Repeats weekly — tap to stop' : 'Tap to repeat weekly'}
+          >
+            {'\u{1F501}'}{order.recurring ? ' On' : ''}
           </button>
         </div>
       </div>

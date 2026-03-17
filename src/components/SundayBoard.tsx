@@ -1,19 +1,30 @@
 import { useState, useCallback } from 'react'
 import type { Order } from '../types'
-import { useOrdersBySunday } from '../hooks/useOrders'
+import { useOrdersBySunday, useGenerateRecurring } from '../hooks/useOrders'
+import { toDateString } from '../utils/dates'
 import PrepSummary from './PrepSummary'
 import OrderCard from './OrderCard'
 import OrderForm from './OrderForm'
-import SundayNotes from './SundayNotes'
+import { NotesDisplay, AddNotes } from './SundayNotes'
 
 interface Props {
   sundayDate: string
+}
+
+/** Get the next Sunday after the given date string */
+function getNextSundayFrom(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + 7)
+  return toDateString(d)
 }
 
 export default function SundayBoard({ sundayDate }: Props) {
   const orders = useOrdersBySunday(sundayDate)
   const [formOpen, setFormOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+
+  // Generate recurring orders from previous Sunday on load
+  useGenerateRecurring(sundayDate)
 
   const handleEdit = useCallback((order: Order) => {
     setEditingOrder(order)
@@ -30,9 +41,14 @@ export default function SundayBoard({ sundayDate }: Props) {
     setFormOpen(true)
   }, [])
 
+  const nextSunday = getNextSundayFrom(sundayDate)
+
   return (
     <div className="space-y-4">
       <PrepSummary orders={orders} />
+
+      {/* Notes for THIS Sunday displayed at top */}
+      <NotesDisplay sundayDate={sundayDate} />
 
       <div className="space-y-3">
         {orders.map((order) => (
@@ -48,7 +64,8 @@ export default function SundayBoard({ sundayDate }: Props) {
         </div>
       )}
 
-      <SundayNotes sundayDate={sundayDate} />
+      {/* Add notes targeting NEXT Sunday */}
+      <AddNotes targetSundayDate={nextSunday} />
 
       {/* FAB — always responsive */}
       <button

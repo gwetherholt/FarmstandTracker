@@ -5,16 +5,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream: '#faf6ee',
-        parchment: '#f0e8d8',
-        wood: '#8b7355',
-        'wood-dark': '#6b5740',
-        olive: '#78713f',
-        'olive-dark': '#5c572f',
-        amber: '#d4a843',
-        'amber-light': '#e8c96a',
-        barn: '#9b3b3b',
-        'sage': '#a8b89c',
+        cream: '#FAFAF8',
+        parchment: '#F0EDE6',
+        wood: '#78716C',
+        'wood-dark': '#3D3929',
+        olive: '#5B7A3D',
+        'olive-dark': '#476230',
+        amber: '#D4943A',
+        'amber-light': '#F0C96D',
+        barn: '#C24444',
+        'sage': '#8BAF7B',
       },
       fontFamily: {
         serif: ['"Playfair Display"', 'Georgia', 'serif'],

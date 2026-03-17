@@ -17,6 +17,17 @@ class FarmStandDB extends Dexie {
       customers: '++id, &name, lastOrderDate',
       notes: '++id, sundayDate, createdAt',
     })
+    // v3: adds recurring, sourceOrderId fields to orders (no index changes needed)
+    this.version(3).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+    }).upgrade((tx) => {
+      return tx.table('orders').toCollection().modify((order) => {
+        if (order.recurring === undefined) order.recurring = false
+        if (order.sourceOrderId === undefined) order.sourceOrderId = null
+      })
+    })
   }
 }
 

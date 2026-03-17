@@ -12,9 +12,11 @@ export interface Order {
   customerName: string
   items: OrderItem
   cartonReturn: boolean
-  paymentMethod: PaymentMethod
+  paymentMethod?: PaymentMethod | null
   notes: string
   pickedUp: boolean
+  recurring?: boolean
+  sourceOrderId?: number | null
   createdAt: string
   updatedAt: string
 }
