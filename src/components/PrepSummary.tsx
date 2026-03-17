@@ -1,7 +1,6 @@
 import { memo } from 'react'
 import type { Order } from '../types'
 import { calculatePrepSummary } from '../utils/pricing'
-import { ChickenEgg, DuckEgg, GooseEgg } from './EggIcons'
 
 interface Props {
   orders: Order[]
@@ -24,21 +23,21 @@ export default memo(function PrepSummary({ orders }: Props) {
       <div className="grid grid-cols-3 gap-2 text-center">
         {summary.chickenHalfDoz > 0 && (
           <div className="bg-cream rounded-lg p-2">
-            <div className="flex justify-center"><ChickenEgg size={28} /></div>
+            <div className="text-2xl">{'\u{1F414}'}</div>
             <div className="font-bold text-wood-dark mt-1">{summary.chickenHalfDoz}</div>
             <div className="text-xs text-wood">half-doz ({summary.chickenEggs} eggs)</div>
           </div>
         )}
         {summary.duckHalfDoz > 0 && (
           <div className="bg-cream rounded-lg p-2">
-            <div className="flex justify-center"><DuckEgg size={28} /></div>
+            <div className="text-2xl">{'\u{1F986}'}</div>
             <div className="font-bold text-wood-dark mt-1">{summary.duckHalfDoz}</div>
             <div className="text-xs text-wood">half-doz ({summary.duckEggs} eggs)</div>
           </div>
         )}
         {summary.gooseHalfDoz > 0 && (
           <div className="bg-cream rounded-lg p-2">
-            <div className="flex justify-center"><GooseEgg size={28} /></div>
+            <div className="text-2xl">{'\u{1FABF}'}</div>
             <div className="font-bold text-wood-dark mt-1">{summary.gooseHalfDoz}</div>
             <div className="text-xs text-wood">half-doz ({summary.gooseEggs} eggs)</div>
           </div>

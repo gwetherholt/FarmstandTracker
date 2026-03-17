@@ -120,24 +120,20 @@ export default function SundayBoard({ sundayDate }: Props) {
                 </svg>
               </div>
               <p className="text-wood/50 italic font-hand text-xl">No preorders yet</p>
-              <p className="text-sm text-wood/35 mt-1">Tap the egg to add one</p>
+              <p className="text-sm text-wood/35 mt-1">Tap + to add one</p>
             </div>
           )}
 
           {/* Add notes targeting NEXT Sunday */}
           <AddNotes targetSundayDate={nextSunday} />
 
-          {/* Egg FAB */}
+          {/* FAB */}
           <button
             onClick={handleOpenForm}
-            className="fixed bottom-6 right-6 w-14 h-[4.25rem] shadow-lg z-40 touch-manipulation select-none active:scale-95 transition-transform"
+            className="fixed bottom-6 right-6 w-14 h-14 bg-olive text-cream rounded-full shadow-lg text-3xl font-bold flex items-center justify-center active:bg-olive-dark z-40 touch-manipulation select-none"
             aria-label="Add order"
           >
-            <svg viewBox="0 0 56 68" className="w-full h-full drop-shadow-md">
-              <ellipse cx="28" cy="37" rx="26" ry="30" fill="#5B7A3D" />
-              <ellipse cx="22" cy="28" rx="8" ry="10" fill="white" opacity="0.12" />
-              <text x="28" y="44" textAnchor="middle" fill="#FAF8F4" fontSize="28" fontWeight="bold" fontFamily="Inter, sans-serif">+</text>
-            </svg>
+            +
           </button>
 
           {formOpen && (

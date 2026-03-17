@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import { ChickenEgg, DuckEgg, GooseEgg } from './EggIcons'
 
 interface Props {
   label: string
@@ -9,19 +8,11 @@ interface Props {
   onChange: (val: number) => void
 }
 
-function EggIcon({ emoji }: { emoji: string }) {
-  // Map legacy emoji prop to SVG egg
-  if (emoji === '\u{1F414}') return <ChickenEgg size={22} />
-  if (emoji === '\u{1F986}') return <DuckEgg size={22} />
-  if (emoji === '\u{1FABF}') return <GooseEgg size={22} />
-  return <span className="text-xl">{emoji}</span>
-}
-
 export default memo(function QuantityStepper({ label, emoji, price, value, onChange }: Props) {
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-2">
-        <EggIcon emoji={emoji} />
+        <span className="text-xl">{emoji}</span>
         <div>
           <div className="font-medium text-wood-dark text-sm">{label}</div>
           <div className="text-xs text-wood">${price}/half-doz</div>
