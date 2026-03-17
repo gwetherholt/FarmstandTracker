@@ -47,3 +47,16 @@ export interface SundayNote {
 export interface ClosedSunday {
   sundayDate: string // primary key
 }
+
+export interface SoldOutSunday {
+  sundayDate: string // primary key
+}
+
+export interface ChecklistItem {
+  id?: number
+  sundayDate: string
+  text: string
+  checked: boolean
+  isDefault: boolean
+  createdAt: string
+}

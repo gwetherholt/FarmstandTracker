@@ -1,11 +1,13 @@
 import Dexie, { type Table } from 'dexie'
-import type { Order, Customer, SundayNote, ClosedSunday } from '../types'
+import type { Order, Customer, SundayNote, ClosedSunday, SoldOutSunday, ChecklistItem } from '../types'
 
 class FarmStandDB extends Dexie {
   orders!: Table<Order, number>
   customers!: Table<Customer, number>
   notes!: Table<SundayNote, number>
   closedSundays!: Table<ClosedSunday, string>
+  soldOutSundays!: Table<SoldOutSunday, string>
+  checklist!: Table<ChecklistItem, number>
 
   constructor() {
     super('farmstand')
@@ -42,6 +44,15 @@ class FarmStandDB extends Dexie {
       customers: '++id, &name, lastOrderDate',
       notes: '++id, sundayDate, createdAt',
       closedSundays: 'sundayDate',
+    })
+    // v6: checklist and sold-out tables
+    this.version(6).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+      closedSundays: 'sundayDate',
+      soldOutSundays: 'sundayDate',
+      checklist: '++id, sundayDate',
     })
   }
 }

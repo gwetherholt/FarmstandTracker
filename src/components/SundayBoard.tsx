@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react'
 import type { Order } from '../types'
 import { useOrdersBySunday, useGenerateRecurring } from '../hooks/useOrders'
 import { useIsClosed, toggleClosed } from '../hooks/useClosedSundays'
+import { useIsSoldOut, toggleSoldOut } from '../hooks/useSoldOut'
 import { toDateString } from '../utils/dates'
 import PrepSummary from './PrepSummary'
 import OrderCard from './OrderCard'
 import OrderForm from './OrderForm'
 import { NotesDisplay, AddNotes } from './SundayNotes'
+import WeeklyChecklist from './WeeklyChecklist'
 
 interface Props {
   sundayDate: string
@@ -22,6 +24,7 @@ function getNextSundayFrom(dateStr: string): string {
 export default function SundayBoard({ sundayDate }: Props) {
   const orders = useOrdersBySunday(sundayDate)
   const isClosed = useIsClosed(sundayDate)
+  const isSoldOut = useIsSoldOut(sundayDate)
   const [formOpen, setFormOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
 
@@ -57,8 +60,29 @@ export default function SundayBoard({ sundayDate }: Props) {
         </div>
       )}
 
-      {/* Close/Reopen toggle */}
-      <div className="flex justify-end">
+      {/* Sold out banner */}
+      {!isClosed && isSoldOut && (
+        <div className="bg-barn/5 border border-barn/20 rounded-xl p-4 text-center">
+          <div className="text-2xl mb-1">{'\u{1F6A8}'}</div>
+          <div className="font-serif text-lg font-bold text-barn uppercase tracking-wider">Sold Out</div>
+          <p className="text-sm text-wood/40 mt-1">All inventory claimed</p>
+        </div>
+      )}
+
+      {/* Week controls */}
+      <div className="flex justify-end gap-2">
+        {!isClosed && (
+          <button
+            onClick={() => toggleSoldOut(sundayDate, isSoldOut)}
+            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors touch-manipulation ${
+              isSoldOut
+                ? 'bg-barn/10 text-barn hover:bg-barn/20'
+                : 'bg-wood/5 text-wood/50 hover:text-wood hover:bg-wood/10'
+            }`}
+          >
+            {isSoldOut ? 'Undo sold out' : 'Mark sold out'}
+          </button>
+        )}
         <button
           onClick={() => toggleClosed(sundayDate, isClosed)}
           className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors touch-manipulation ${
@@ -77,6 +101,9 @@ export default function SundayBoard({ sundayDate }: Props) {
 
           {/* Notes for THIS Sunday displayed at top */}
           <NotesDisplay sundayDate={sundayDate} />
+
+          {/* Weekly checklist */}
+          <WeeklyChecklist sundayDate={sundayDate} />
 
           <div className="space-y-3">
             {orders.map((order) => (
