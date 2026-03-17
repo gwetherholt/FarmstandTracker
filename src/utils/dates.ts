@@ -39,6 +39,22 @@ export function formatSundayLabel(dateStr: string, reference: Date = new Date())
   return `Sunday, ${month} ${day}`
 }
 
+/** Short date for nav: "Mar 22" */
+export function formatShortDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00')
+  const month = date.toLocaleDateString('en-US', { month: 'short' })
+  return `${month} ${date.getDate()}`
+}
+
+/** Relative label: "This Sun", "Next Sun", or null for other weeks */
+export function getRelativeLabel(dateStr: string, reference: Date = new Date()): string | null {
+  const thisSunday = getNextSunday(reference)
+  const nextSunday = getFollowingSunday(reference)
+  if (toDateString(new Date(dateStr + 'T00:00:00')) === toDateString(thisSunday)) return 'This Sun'
+  if (toDateString(new Date(dateStr + 'T00:00:00')) === toDateString(nextSunday)) return 'Next Sun'
+  return null
+}
+
 /** Check if a date string is in the past */
 export function isPastSunday(dateStr: string): boolean {
   const today = new Date()

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { getNextSunday, toDateString, formatSundayLabel } from './utils/dates'
+import { getNextSunday, toDateString, formatSundayLabel, formatShortDate, getRelativeLabel } from './utils/dates'
 import { useClosedSundaySet } from './hooks/useClosedSundays'
 import { useNotificationScheduler } from './hooks/useNotifications'
 import SundayBoard from './components/SundayBoard'
@@ -65,55 +65,58 @@ export default function App() {
 
         {/* Sunday navigation */}
         <div className="px-4 mb-4">
-          <div className="flex items-center gap-1 bg-parchment rounded-xl p-1">
-            {/* Previous week */}
+          <div className="flex items-center bg-parchment rounded-xl p-1">
+            {/* Previous week arrow */}
             <button
               onClick={goBack}
-              className="w-10 h-10 flex items-center justify-center rounded-lg text-wood/60 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0"
+              className="w-9 h-12 flex items-center justify-center rounded-lg text-wood/50 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0 text-lg"
               aria-label="Previous Sunday"
             >
               {'\u2039'}
             </button>
 
-            {/* Previous Sunday label */}
+            {/* Previous Sunday */}
             <button
               onClick={goBack}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors text-center truncate ${
-                closedSet.has(prevSunday)
-                  ? 'text-wood/30 line-through'
-                  : 'text-wood/50'
+              className={`flex-1 py-1.5 rounded-lg transition-colors text-center touch-manipulation ${
+                closedSet.has(prevSunday) ? 'opacity-40 line-through' : ''
               }`}
             >
-              {formatSundayLabel(prevSunday)}
+              <div className="text-[11px] text-wood/40">{getRelativeLabel(prevSunday) ?? 'Sun'}</div>
+              <div className="text-xs font-medium text-wood/60">{formatShortDate(prevSunday)}</div>
             </button>
 
             {/* Current Sunday (active) */}
             <div
-              className={`flex-[1.4] py-2.5 rounded-lg text-center shadow-sm truncate font-hand text-lg font-bold ${
+              className={`flex-[1.3] py-1.5 px-1 rounded-lg text-center shadow-sm mx-0.5 ${
                 closedSet.has(activeSunday)
-                  ? 'bg-white/80 text-wood/40 line-through'
-                  : 'bg-white text-wood-dark'
+                  ? 'bg-white/80 opacity-50 line-through'
+                  : 'bg-white'
               }`}
             >
-              {formatSundayLabel(activeSunday)}
+              {getRelativeLabel(activeSunday) && (
+                <div className="text-[11px] text-olive font-medium">{getRelativeLabel(activeSunday)}</div>
+              )}
+              <div className="font-hand text-xl font-bold text-wood-dark leading-tight">
+                {formatShortDate(activeSunday)}
+              </div>
             </div>
 
-            {/* Next Sunday label */}
+            {/* Next Sunday */}
             <button
               onClick={goForward}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors text-center truncate ${
-                closedSet.has(nextSunday)
-                  ? 'text-wood/30 line-through'
-                  : 'text-wood/50'
+              className={`flex-1 py-1.5 rounded-lg transition-colors text-center touch-manipulation ${
+                closedSet.has(nextSunday) ? 'opacity-40 line-through' : ''
               }`}
             >
-              {formatSundayLabel(nextSunday)}
+              <div className="text-[11px] text-wood/40">{getRelativeLabel(nextSunday) ?? 'Sun'}</div>
+              <div className="text-xs font-medium text-wood/60">{formatShortDate(nextSunday)}</div>
             </button>
 
-            {/* Next week */}
+            {/* Next week arrow */}
             <button
               onClick={goForward}
-              className="w-10 h-10 flex items-center justify-center rounded-lg text-wood/60 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0"
+              className="w-9 h-12 flex items-center justify-center rounded-lg text-wood/50 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0 text-lg"
               aria-label="Next Sunday"
             >
               {'\u203A'}
@@ -127,7 +130,7 @@ export default function App() {
                 onClick={goToday}
                 className="text-xs text-olive font-medium px-3 py-1 rounded-full bg-olive/10 hover:bg-olive/20 transition-colors touch-manipulation"
               >
-                {'\u2190'} Back to {formatSundayLabel(baseSunday)}
+                {'\u2190'} This Sunday ({formatShortDate(baseSunday)})
               </button>
             </div>
           )}
