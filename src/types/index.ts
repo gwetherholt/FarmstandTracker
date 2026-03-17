@@ -33,3 +33,7 @@ export interface SundayNote {
   text: string
   createdAt: string
 }
+
+export interface ClosedSunday {
+  sundayDate: string // primary key
+}

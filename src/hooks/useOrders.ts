@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect } from 'react'
 import { db } from '../db'
 import type { Order } from '../types'
+import { isSundayClosed } from './useClosedSundays'
 
 export function useOrdersBySunday(sundayDate: string) {
   return useLiveQuery(
@@ -69,8 +70,12 @@ function getPreviousSunday(sundayDate: string): string {
 /**
  * Generate recurring orders from the previous Sunday into this Sunday.
  * Only copies orders that are marked recurring and haven't already been copied.
+ * Skips generation if this Sunday is marked as closed.
  */
 export async function generateRecurringOrders(sundayDate: string) {
+  // Don't generate recurring orders for closed Sundays
+  if (await isSundayClosed(sundayDate)) return
+
   const prevSunday = getPreviousSunday(sundayDate)
   const prevOrders = await db.orders.where('sundayDate').equals(prevSunday).toArray()
   const recurringOrders = prevOrders.filter((o) => o.recurring)

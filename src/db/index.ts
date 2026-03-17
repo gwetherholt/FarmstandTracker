@@ -1,10 +1,11 @@
 import Dexie, { type Table } from 'dexie'
-import type { Order, Customer, SundayNote } from '../types'
+import type { Order, Customer, SundayNote, ClosedSunday } from '../types'
 
 class FarmStandDB extends Dexie {
   orders!: Table<Order, number>
   customers!: Table<Customer, number>
   notes!: Table<SundayNote, number>
+  closedSundays!: Table<ClosedSunday, string>
 
   constructor() {
     super('farmstand')
@@ -27,6 +28,13 @@ class FarmStandDB extends Dexie {
         if (order.recurring === undefined) order.recurring = false
         if (order.sourceOrderId === undefined) order.sourceOrderId = null
       })
+    })
+    // v4: closed Sundays table
+    this.version(4).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+      closedSundays: 'sundayDate',
     })
   }
 }

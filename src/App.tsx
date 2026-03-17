@@ -1,17 +1,33 @@
-import { useState } from 'react'
-import { getNextSunday, getFollowingSunday, toDateString, formatSundayLabel } from './utils/dates'
+import { useState, useCallback } from 'react'
+import { getNextSunday, toDateString, formatSundayLabel } from './utils/dates'
+import { useClosedSundaySet } from './hooks/useClosedSundays'
 import SundayBoard from './components/SundayBoard'
 import History from './components/History'
 
 type View = 'current' | 'history'
 
+/** Get a Sunday date string offset by N weeks from the base Sunday */
+function getSundayByOffset(baseSunday: string, offset: number): string {
+  const d = new Date(baseSunday + 'T00:00:00')
+  d.setDate(d.getDate() + offset * 7)
+  return toDateString(d)
+}
+
 export default function App() {
   const [view, setView] = useState<View>('current')
-  const [selectedTab, setSelectedTab] = useState<0 | 1>(0)
+  const [weekOffset, setWeekOffset] = useState(0)
+  const closedSet = useClosedSundaySet()
 
-  const thisSunday = toDateString(getNextSunday())
-  const nextSunday = toDateString(getFollowingSunday())
-  const activeSunday = selectedTab === 0 ? thisSunday : nextSunday
+  const baseSunday = toDateString(getNextSunday())
+  const activeSunday = getSundayByOffset(baseSunday, weekOffset)
+
+  // Peek at neighboring Sundays for nav labels
+  const prevSunday = getSundayByOffset(baseSunday, weekOffset - 1)
+  const nextSunday = getSundayByOffset(baseSunday, weekOffset + 1)
+
+  const goBack = useCallback(() => setWeekOffset((o) => o - 1), [])
+  const goForward = useCallback(() => setWeekOffset((o) => o + 1), [])
+  const goToday = useCallback(() => setWeekOffset(0), [])
 
   if (view === 'history') {
     return (
@@ -44,30 +60,74 @@ export default function App() {
           </div>
         </header>
 
-        {/* Sunday tabs */}
+        {/* Sunday navigation */}
         <div className="px-4 mb-4">
-          <div className="flex gap-2 bg-parchment rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-parchment rounded-xl p-1">
+            {/* Previous week */}
             <button
-              onClick={() => setSelectedTab(0)}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                selectedTab === 0
-                  ? 'bg-white text-wood-dark shadow-sm'
-                  : 'text-wood/60'
+              onClick={goBack}
+              className="w-10 h-10 flex items-center justify-center rounded-lg text-wood/60 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0"
+              aria-label="Previous Sunday"
+            >
+              {'\u2039'}
+            </button>
+
+            {/* Previous Sunday label */}
+            <button
+              onClick={goBack}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors text-center truncate ${
+                closedSet.has(prevSunday)
+                  ? 'text-wood/30 line-through'
+                  : 'text-wood/50'
               }`}
             >
-              {formatSundayLabel(thisSunday)}
+              {formatSundayLabel(prevSunday)}
             </button>
+
+            {/* Current Sunday (active) */}
+            <div
+              className={`flex-[1.4] py-2.5 rounded-lg text-sm font-semibold text-center shadow-sm truncate ${
+                closedSet.has(activeSunday)
+                  ? 'bg-white/80 text-wood/40 line-through'
+                  : 'bg-white text-wood-dark'
+              }`}
+            >
+              {formatSundayLabel(activeSunday)}
+            </div>
+
+            {/* Next Sunday label */}
             <button
-              onClick={() => setSelectedTab(1)}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                selectedTab === 1
-                  ? 'bg-white text-wood-dark shadow-sm'
-                  : 'text-wood/60'
+              onClick={goForward}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors text-center truncate ${
+                closedSet.has(nextSunday)
+                  ? 'text-wood/30 line-through'
+                  : 'text-wood/50'
               }`}
             >
               {formatSundayLabel(nextSunday)}
             </button>
+
+            {/* Next week */}
+            <button
+              onClick={goForward}
+              className="w-10 h-10 flex items-center justify-center rounded-lg text-wood/60 hover:text-wood-dark hover:bg-white/60 transition-colors touch-manipulation flex-shrink-0"
+              aria-label="Next Sunday"
+            >
+              {'\u203A'}
+            </button>
           </div>
+
+          {/* Today button — only show when navigated away */}
+          {weekOffset !== 0 && (
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={goToday}
+                className="text-xs text-olive font-medium px-3 py-1 rounded-full bg-olive/10 hover:bg-olive/20 transition-colors touch-manipulation"
+              >
+                {'\u2190'} Back to {formatSundayLabel(baseSunday)}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Board */}
