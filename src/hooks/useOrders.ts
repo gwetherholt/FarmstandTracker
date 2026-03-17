@@ -35,10 +35,14 @@ export function addOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
   }).then(() => {
     // Upsert customer in background — don't block anything
     db.customers.where('name').equalsIgnoreCase(order.customerName).first().then((existing) => {
+      const updates: Partial<{ lastOrderDate: string; contactSource: typeof order.contactSource }> = {
+        lastOrderDate: order.sundayDate,
+      }
+      if (order.contactSource) updates.contactSource = order.contactSource
       if (existing) {
-        db.customers.update(existing.id!, { lastOrderDate: order.sundayDate })
+        db.customers.update(existing.id!, updates)
       } else {
-        db.customers.add({ name: order.customerName, lastOrderDate: order.sundayDate })
+        db.customers.add({ name: order.customerName, ...updates } as { name: string; lastOrderDate: string; contactSource?: typeof order.contactSource })
       }
     })
   })
@@ -98,6 +102,7 @@ export async function generateRecurringOrders(sundayDate: string) {
       items: { ...source.items },
       cartonReturn: source.cartonReturn,
       paymentMethod: source.paymentMethod,
+      contactSource: source.contactSource,
       notes: source.notes,
       pickedUp: false,
       recurring: true,

@@ -36,6 +36,13 @@ class FarmStandDB extends Dexie {
       notes: '++id, sundayDate, createdAt',
       closedSundays: 'sundayDate',
     })
+    // v5: contactSource field on orders and customers (no index changes)
+    this.version(5).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+      closedSundays: 'sundayDate',
+    })
   }
 }
 

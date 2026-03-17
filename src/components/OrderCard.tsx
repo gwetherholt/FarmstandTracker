@@ -1,7 +1,16 @@
 import { memo, useState, useCallback } from 'react'
-import type { Order } from '../types'
+import type { Order, ContactSource } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
 import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
+
+const CONTACT_DISPLAY: Record<ContactSource, { icon: string; label: string }> = {
+  instagram: { icon: '\u{1F4F7}', label: 'IG' },
+  facebook: { icon: '\u{1F4AC}', label: 'FB' },
+  marketplace: { icon: '\u{1F6D2}', label: 'Mkt' },
+  text: { icon: '\u{1F4F1}', label: 'Text' },
+  walkup: { icon: '\u{1F6B6}', label: 'Walk-up' },
+  other: { icon: '\u{2709}\uFE0F', label: 'Other' },
+}
 
 interface Props {
   order: Order
@@ -49,6 +58,11 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
                 <span>{'\u{1FABF}'} {order.items.goose} &times; half-doz</span>
               )}
             </div>
+            {order.contactSource && (
+              <span className="inline-flex items-center gap-0.5 mt-1 text-[11px] text-wood/50">
+                {CONTACT_DISPLAY[order.contactSource].icon} {CONTACT_DISPLAY[order.contactSource].label}
+              </span>
+            )}
             {order.notes && (
               <p className="text-xs text-wood/70 mt-1 italic">{order.notes}</p>
             )}

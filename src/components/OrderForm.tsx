@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import type { Order, OrderItem, PaymentMethod } from '../types'
-import { useCustomerNames } from '../hooks/useCustomers'
+import type { Order, OrderItem, PaymentMethod, ContactSource } from '../types'
+import { useCustomerNames, useCustomerMap } from '../hooks/useCustomers'
 import { addOrder, updateOrder } from '../hooks/useOrders'
 import { calculateOrderTotal, PRICES } from '../utils/pricing'
 import QuantityStepper from './QuantityStepper'
@@ -13,8 +13,18 @@ interface Props {
 
 const EMPTY_ITEMS: OrderItem = { chicken: 0, duck: 0, goose: 0 }
 
+const CONTACT_SOURCES: { value: ContactSource; label: string; icon: string }[] = [
+  { value: 'instagram', label: 'IG DM', icon: '\u{1F4F7}' },
+  { value: 'facebook', label: 'FB Msg', icon: '\u{1F4AC}' },
+  { value: 'marketplace', label: 'FB Mkt', icon: '\u{1F6D2}' },
+  { value: 'text', label: 'Text', icon: '\u{1F4F1}' },
+  { value: 'walkup', label: 'Walk-up', icon: '\u{1F6B6}' },
+  { value: 'other', label: 'Other', icon: '\u{2709}\uFE0F' },
+]
+
 export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) {
   const customerNames = useCustomerNames()
+  const customerMap = useCustomerMap()
   const nameRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState('')
@@ -22,6 +32,8 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
   const [notes, setNotes] = useState('')
   const [payment, setPayment] = useState<PaymentMethod | null>(null)
   const [showPayment, setShowPayment] = useState(false)
+  const [contactSource, setContactSource] = useState<ContactSource | null>(null)
+  const [showContact, setShowContact] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Populate form when editing
@@ -32,6 +44,8 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
       setNotes(editingOrder.notes)
       setPayment(editingOrder.paymentMethod ?? null)
       setShowPayment(!!editingOrder.paymentMethod)
+      setContactSource(editingOrder.contactSource ?? null)
+      setShowContact(!!editingOrder.contactSource)
     }
   }, [editingOrder])
 
@@ -54,10 +68,20 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
     setShowSuggestions(val.length > 0)
   }, [])
 
+  // Auto-fill contact source from customer's saved preference
+  const applyCustomerDefaults = useCallback((customerName: string) => {
+    const customer = customerMap.get(customerName.toLowerCase())
+    if (customer?.contactSource && !editingOrder) {
+      setContactSource(customer.contactSource)
+      setShowContact(true)
+    }
+  }, [customerMap, editingOrder])
+
   const selectSuggestion = useCallback((s: string) => {
     setName(s)
     setShowSuggestions(false)
-  }, [])
+    applyCustomerDefaults(s)
+  }, [applyCustomerDefaults])
 
   const setChicken = useCallback((v: number) => setItems((prev) => ({ ...prev, chicken: v })), [])
   const setDuck = useCallback((v: number) => setItems((prev) => ({ ...prev, duck: v })), [])
@@ -74,6 +98,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         items,
         notes,
         paymentMethod: payment,
+        contactSource,
       })
     } else {
       addOrder({
@@ -82,6 +107,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
         items,
         notes,
         paymentMethod: payment,
+        contactSource,
         cartonReturn: false,
         pickedUp: false,
       })
@@ -111,7 +137,11 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               onBlur={() => {
-                setTimeout(() => setShowSuggestions(false), 150)
+                setTimeout(() => {
+                  setShowSuggestions(false)
+                  // Also try to auto-fill on blur if exact match
+                  if (name.trim()) applyCustomerDefaults(name.trim())
+                }, 150)
               }}
               onFocus={() => { if (name.length > 0) setShowSuggestions(true) }}
               placeholder="Customer name"
@@ -177,16 +207,62 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
             />
           </div>
 
+          {/* Optional fields row */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {!showContact && (
+              <button
+                type="button"
+                onClick={() => setShowContact(true)}
+                className="text-sm text-olive hover:text-olive-dark underline underline-offset-2"
+              >
+                + Add source
+              </button>
+            )}
+            {!showPayment && (
+              <button
+                type="button"
+                onClick={() => setShowPayment(true)}
+                className="text-sm text-olive hover:text-olive-dark underline underline-offset-2"
+              >
+                + Add payment method
+              </button>
+            )}
+          </div>
+
+          {/* Contact source — hidden by default */}
+          {showContact && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-wood">Contact source</label>
+                <button
+                  type="button"
+                  onClick={() => { setShowContact(false); setContactSource(null) }}
+                  className="text-xs text-wood/50 hover:text-wood"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {CONTACT_SOURCES.map((cs) => (
+                  <button
+                    key={cs.value}
+                    type="button"
+                    onClick={() => setContactSource(cs.value)}
+                    className={`px-2.5 py-2 rounded-lg text-xs font-medium transition-colors touch-manipulation ${
+                      contactSource === cs.value
+                        ? 'bg-olive text-cream'
+                        : 'bg-white border border-wood/20 text-wood'
+                    }`}
+                  >
+                    {cs.icon} {cs.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Payment — hidden by default */}
-          {!showPayment ? (
-            <button
-              type="button"
-              onClick={() => setShowPayment(true)}
-              className="text-sm text-olive hover:text-olive-dark underline underline-offset-2"
-            >
-              + Add payment method
-            </button>
-          ) : (
+          {showPayment && (
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-wood">Payment</label>

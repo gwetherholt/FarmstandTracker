@@ -6,6 +6,14 @@ export interface OrderItem {
 
 export type PaymentMethod = 'lockbox' | 'venmo'
 
+export type ContactSource =
+  | 'instagram'
+  | 'facebook'
+  | 'marketplace'
+  | 'text'
+  | 'walkup'
+  | 'other'
+
 export interface Order {
   id?: number
   sundayDate: string // ISO date string YYYY-MM-DD
@@ -13,6 +21,7 @@ export interface Order {
   items: OrderItem
   cartonReturn: boolean
   paymentMethod?: PaymentMethod | null
+  contactSource?: ContactSource | null
   notes: string
   pickedUp: boolean
   recurring?: boolean
@@ -25,6 +34,7 @@ export interface Customer {
   id?: number
   name: string
   lastOrderDate: string
+  contactSource?: ContactSource | null
 }
 
 export interface SundayNote {
