@@ -186,7 +186,7 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
               />
               <QuantityStepper
                 label="Fertile Goose Eggs"
-                emoji={'\u{1FABF}'}
+                emoji={'\u{1F9A2}'}
                 price={PRICES.goose}
                 value={items.goose}
                 onChange={setGoose}

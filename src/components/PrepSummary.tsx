@@ -37,7 +37,7 @@ export default memo(function PrepSummary({ orders }: Props) {
         )}
         {summary.gooseHalfDoz > 0 && (
           <div className="bg-cream rounded-lg p-2">
-            <div className="text-2xl">{'\u{1FABF}'}</div>
+            <div className="text-2xl">{'\u{1F9A2}'}</div>
             <div className="font-bold text-wood-dark mt-1">{summary.gooseHalfDoz}</div>
             <div className="text-xs text-wood">half-doz ({summary.gooseEggs} eggs)</div>
           </div>

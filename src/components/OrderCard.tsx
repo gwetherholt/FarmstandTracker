@@ -55,7 +55,7 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
                 <span>{'\u{1F986}'} {order.items.duck} &times; half-doz</span>
               )}
               {order.items.goose > 0 && (
-                <span>{'\u{1FABF}'} {order.items.goose} &times; half-doz</span>
+                <span>{'\u{1F9A2}'} {order.items.goose} &times; half-doz</span>
               )}
             </div>
             {order.contactSource && (
