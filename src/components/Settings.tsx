@@ -7,6 +7,7 @@ import {
   sendTestNotification,
 } from '../utils/notifications'
 import ProductManager from './ProductManager'
+import BackupManager from './BackupManager'
 
 interface Props {
   onBack: () => void
@@ -78,6 +79,9 @@ export default function Settings({ onBack }: Props) {
 
       {/* Products section */}
       <ProductManager />
+
+      {/* Backup section */}
+      <BackupManager />
 
       {/* Notifications section */}
       <div className="bg-white rounded-xl border border-wood/10 overflow-hidden">
