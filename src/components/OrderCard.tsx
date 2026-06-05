@@ -1,6 +1,7 @@
 import { memo, useState, useCallback } from 'react'
 import type { Order, ContactSource } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
+import { useProductMap } from '../hooks/useProducts'
 import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
 
 const CONTACT_DISPLAY: Record<ContactSource, { icon: string; label: string }> = {
@@ -9,7 +10,7 @@ const CONTACT_DISPLAY: Record<ContactSource, { icon: string; label: string }> = 
   marketplace: { icon: '\u{1F6D2}', label: 'Mkt' },
   text: { icon: '\u{1F4F1}', label: 'Text' },
   walkup: { icon: '\u{1F6B6}', label: 'Walk-up' },
-  other: { icon: '\u{2709}\uFE0F', label: 'Other' },
+  other: { icon: '\u{2709}️', label: 'Other' },
 }
 
 interface Props {
@@ -19,12 +20,21 @@ interface Props {
 
 export default memo(function OrderCard({ order, onEdit }: Props) {
   const [confirming, setConfirming] = useState(false)
-  const total = calculateOrderTotal(order.items)
+  const productMap = useProductMap()
+  const total = calculateOrderTotal(order.items, productMap)
 
   const handleDelete = useCallback(() => {
     deleteOrder(order.id!)
     setConfirming(false)
   }, [order.id])
+
+  const lineEntries = Object.entries(order.items)
+    .filter(([, qty]) => qty > 0)
+    .sort(([a], [b]) => {
+      const pa = productMap.get(a)?.sortOrder ?? 999
+      const pb = productMap.get(b)?.sortOrder ?? 999
+      return pa - pb
+    })
 
   return (
     <div
@@ -48,15 +58,21 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
               )}
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-wood">
-              {order.items.chicken > 0 && (
-                <span>{'\u{1F414}'} {order.items.chicken} &times; half-doz</span>
-              )}
-              {order.items.duck > 0 && (
-                <span>{'\u{1F986}'} {order.items.duck} &times; half-doz</span>
-              )}
-              {order.items.goose > 0 && (
-                <span>{'\u{1F9A2}'} {order.items.goose} &times; half-doz</span>
-              )}
+              {lineEntries.map(([key, qty]) => {
+                const product = productMap.get(key)
+                if (!product) {
+                  return (
+                    <span key={key} className="text-wood/40 italic">
+                      {qty} &times; {key} (removed)
+                    </span>
+                  )
+                }
+                return (
+                  <span key={key}>
+                    {product.emoji} {qty} &times; {product.unit}
+                  </span>
+                )
+              })}
             </div>
             {order.contactSource && (
               <span className="inline-flex items-center gap-0.5 mt-1 text-[11px] text-wood/50">
@@ -81,7 +97,7 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
               className="w-9 h-9 flex items-center justify-center rounded-lg text-barn/40 hover:text-barn hover:bg-barn/10 transition-colors touch-manipulation"
               aria-label="Delete order"
             >
-              {'\u{1F5D1}\uFE0F'}
+              {'\u{1F5D1}️'}
             </button>
           </div>
         </div>
@@ -95,7 +111,7 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
                 : 'bg-olive/10 text-olive-dark'
             }`}
           >
-            {order.pickedUp ? '\u2705 Picked Up' : '\u{1F4E6} Mark Picked Up'}
+            {order.pickedUp ? '✅ Picked Up' : '\u{1F4E6} Mark Picked Up'}
           </button>
           <button
             onClick={() => toggleRecurring(order.id!, !!order.recurring)}

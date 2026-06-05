@@ -4,18 +4,19 @@ interface Props {
   label: string
   emoji: string
   price: number
+  unit: string
   value: number
   onChange: (val: number) => void
 }
 
-export default memo(function QuantityStepper({ label, emoji, price, value, onChange }: Props) {
+export default memo(function QuantityStepper({ label, emoji, price, unit, value, onChange }: Props) {
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-2">
         <span className="text-xl">{emoji}</span>
         <div>
           <div className="font-medium text-wood-dark text-sm">{label}</div>
-          <div className="text-xs text-wood">${price}/half-doz</div>
+          <div className="text-xs text-wood">${price}/{unit}</div>
         </div>
       </div>
       <div className="flex items-center gap-3">

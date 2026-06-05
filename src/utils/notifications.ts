@@ -1,5 +1,5 @@
 import { db } from '../db'
-import type { NotificationSettings } from '../types'
+import type { NotificationSettings, Product } from '../types'
 import { getNextSunday, toDateString } from './dates'
 import { calculatePrepSummary } from './pricing'
 
@@ -22,6 +22,14 @@ export async function getSettings(): Promise<NotificationSettings> {
 export async function saveSettings(updates: Partial<NotificationSettings>): Promise<void> {
   const current = await getSettings()
   await db.notificationSettings.put({ ...current, ...updates, key: 'settings' })
+}
+
+/** Load the product catalog as a key->Product map (used outside React). */
+async function loadProductMap(): Promise<Map<string, Product>> {
+  const products = await db.products.toArray()
+  const map = new Map<string, Product>()
+  for (const p of products) map.set(p.key, p)
+  return map
 }
 
 export async function requestPermission(): Promise<NotificationPermission> {
@@ -56,10 +64,12 @@ export async function sendTestNotification(): Promise<void> {
 
   const thisSunday = toDateString(getNextSunday())
   const orders = await db.orders.where('sundayDate').equals(thisSunday).toArray()
-  const summary = calculatePrepSummary(orders)
+  const productMap = await loadProductMap()
+  const summary = calculatePrepSummary(orders, productMap)
 
+  const parts = summary.lines.map((line) => `${line.qty} ${line.product.name.toLowerCase()}`)
   const body = orders.length > 0
-    ? `${summary.orderCount} order${summary.orderCount !== 1 ? 's' : ''}: ${summary.chickenHalfDoz} chicken, ${summary.duckHalfDoz} duck, ${summary.gooseHalfDoz} goose half-doz — $${summary.revenue} total`
+    ? `${summary.orderCount} order${summary.orderCount !== 1 ? 's' : ''}: ${parts.join(', ')} — $${summary.revenue} total`
     : 'No orders yet for this Sunday.'
 
   await showNotification('\u{1F95A} Test Reminder', body)
@@ -87,11 +97,14 @@ export async function checkScheduledNotifications(): Promise<void> {
       const closed = await db.closedSundays.get(thisSunday)
       if (!closed) {
         const orders = await db.orders.where('sundayDate').equals(thisSunday).toArray()
-        const summary = calculatePrepSummary(orders)
-        const parts: string[] = []
-        if (summary.chickenHalfDoz > 0) parts.push(`${summary.chickenEggs} chicken eggs`)
-        if (summary.duckHalfDoz > 0) parts.push(`${summary.duckEggs} duck eggs`)
-        if (summary.gooseHalfDoz > 0) parts.push(`${summary.gooseEggs} goose eggs`)
+        const productMap = await loadProductMap()
+        const summary = calculatePrepSummary(orders, productMap)
+        const parts = summary.lines.map((line) => {
+          if (line.product.unit === 'half-doz') {
+            return `${line.qty * 6} ${line.product.name.toLowerCase()}`
+          }
+          return `${line.qty} ${line.product.name.toLowerCase()}`
+        })
         const body = orders.length > 0
           ? `You have ${summary.orderCount} order${summary.orderCount !== 1 ? 's' : ''} today. Prep: ${parts.join(', ')} — $${summary.revenue}`
           : 'No orders for today.'
@@ -111,13 +124,11 @@ export async function checkScheduledNotifications(): Promise<void> {
       const closed = await db.closedSundays.get(tomorrowSunday)
       if (!closed) {
         const orders = await db.orders.where('sundayDate').equals(tomorrowSunday).toArray()
-        const summary = calculatePrepSummary(orders)
-        const parts: string[] = []
-        if (summary.chickenHalfDoz > 0) parts.push(`${summary.chickenHalfDoz} chicken`)
-        if (summary.duckHalfDoz > 0) parts.push(`${summary.duckHalfDoz} duck`)
-        if (summary.gooseHalfDoz > 0) parts.push(`${summary.gooseHalfDoz} goose`)
+        const productMap = await loadProductMap()
+        const summary = calculatePrepSummary(orders, productMap)
+        const parts = summary.lines.map((line) => `${line.qty} ${line.product.name.toLowerCase()} (${line.product.unit})`)
         const body = orders.length > 0
-          ? `Tomorrow's prep: ${parts.join(', ')} half-doz — ${summary.orderCount} total order${summary.orderCount !== 1 ? 's' : ''}`
+          ? `Tomorrow's prep: ${parts.join(', ')} — ${summary.orderCount} total order${summary.orderCount !== 1 ? 's' : ''}`
           : 'No orders yet for tomorrow.'
         await showNotification('\u{1F414} Tomorrow\'s prep', body)
       }

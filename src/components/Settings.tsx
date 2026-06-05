@@ -6,6 +6,7 @@ import {
   getPermissionStatus,
   sendTestNotification,
 } from '../utils/notifications'
+import ProductManager from './ProductManager'
 
 interface Props {
   onBack: () => void
@@ -74,6 +75,9 @@ export default function Settings({ onBack }: Props) {
         </button>
         <h2 className="font-serif text-2xl text-wood-dark font-bold">Settings</h2>
       </div>
+
+      {/* Products section */}
+      <ProductManager />
 
       {/* Notifications section */}
       <div className="bg-white rounded-xl border border-wood/10 overflow-hidden">

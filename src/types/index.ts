@@ -1,7 +1,16 @@
-export interface OrderItem {
-  chicken: number // half-dozens
-  duck: number
-  goose: number
+// product key -> quantity. Existing orders stored {chicken, duck, goose} maps which remain valid.
+export type OrderItem = Record<string, number>
+
+export interface Product {
+  id?: number
+  key: string // stable identifier used in OrderItem maps
+  name: string
+  emoji: string
+  price: number
+  unit: string // e.g. "half-doz", "each", "bunch"
+  active: boolean
+  sortOrder: number
+  createdAt: string
 }
 
 export type PaymentMethod = 'lockbox' | 'venmo'

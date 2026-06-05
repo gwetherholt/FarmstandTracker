@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Order, Customer, SundayNote, ClosedSunday, SoldOutSunday, ChecklistItem, NotificationSettings } from '../types'
+import type { Order, Customer, SundayNote, ClosedSunday, SoldOutSunday, ChecklistItem, NotificationSettings, Product } from '../types'
 
 class FarmStandDB extends Dexie {
   orders!: Table<Order, number>
@@ -9,6 +9,7 @@ class FarmStandDB extends Dexie {
   soldOutSundays!: Table<SoldOutSunday, string>
   checklist!: Table<ChecklistItem, number>
   notificationSettings!: Table<NotificationSettings, string>
+  products!: Table<Product, number>
 
   constructor() {
     super('farmstand')
@@ -64,6 +65,25 @@ class FarmStandDB extends Dexie {
       soldOutSundays: 'sundayDate',
       checklist: '++id, sundayDate',
       notificationSettings: 'key',
+    })
+    // v8: product catalog
+    this.version(8).stores({
+      orders: '++id, sundayDate, customerName, createdAt',
+      customers: '++id, &name, lastOrderDate',
+      notes: '++id, sundayDate, createdAt',
+      closedSundays: 'sundayDate',
+      soldOutSundays: 'sundayDate',
+      checklist: '++id, sundayDate',
+      notificationSettings: 'key',
+      products: '++id, &key, sortOrder, active',
+    }).upgrade(async (tx) => {
+      const now = new Date().toISOString()
+      await tx.table('products').bulkAdd([
+        { key: 'chicken', name: 'Rainbow Chicken Eggs', emoji: '\u{1F414}', price: 2, unit: 'half-doz', active: true, sortOrder: 0, createdAt: now },
+        { key: 'duck', name: 'Duck Eggs', emoji: '\u{1F986}', price: 3, unit: 'half-doz', active: true, sortOrder: 1, createdAt: now },
+        { key: 'goose', name: 'Fertile Goose Eggs', emoji: '\u{1FABF}', price: 6, unit: 'half-doz', active: true, sortOrder: 2, createdAt: now },
+        { key: 'quail', name: 'Quail Eggs', emoji: '\u{1F95A}', price: 4, unit: 'half-doz', active: true, sortOrder: 3, createdAt: now },
+      ])
     })
   }
 }

@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Order, OrderItem, PaymentMethod, ContactSource } from '../types'
 import { useCustomerNames, useCustomerMap } from '../hooks/useCustomers'
 import { addOrder, updateOrder } from '../hooks/useOrders'
-import { calculateOrderTotal, PRICES } from '../utils/pricing'
+import { useActiveProducts, useProductMap } from '../hooks/useProducts'
+import { calculateOrderTotal } from '../utils/pricing'
 import QuantityStepper from './QuantityStepper'
 
 interface Props {
@@ -11,24 +12,24 @@ interface Props {
   onClose: () => void
 }
 
-const EMPTY_ITEMS: OrderItem = { chicken: 0, duck: 0, goose: 0 }
-
 const CONTACT_SOURCES: { value: ContactSource; label: string; icon: string }[] = [
   { value: 'instagram', label: 'IG DM', icon: '\u{1F4F7}' },
   { value: 'facebook', label: 'FB Msg', icon: '\u{1F4AC}' },
   { value: 'marketplace', label: 'FB Mkt', icon: '\u{1F6D2}' },
   { value: 'text', label: 'Text', icon: '\u{1F4F1}' },
   { value: 'walkup', label: 'Walk-up', icon: '\u{1F6B6}' },
-  { value: 'other', label: 'Other', icon: '\u{2709}\uFE0F' },
+  { value: 'other', label: 'Other', icon: '\u{2709}️' },
 ]
 
 export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) {
   const customerNames = useCustomerNames()
   const customerMap = useCustomerMap()
+  const activeProducts = useActiveProducts()
+  const productMap = useProductMap()
   const nameRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState('')
-  const [items, setItems] = useState<OrderItem>(EMPTY_ITEMS)
+  const [items, setItems] = useState<OrderItem>({})
   const [notes, setNotes] = useState('')
   const [payment, setPayment] = useState<PaymentMethod | null>(null)
   const [showPayment, setShowPayment] = useState(false)
@@ -54,8 +55,8 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
     return () => clearTimeout(t)
   }, [])
 
-  const total = calculateOrderTotal(items)
-  const hasItems = items.chicken > 0 || items.duck > 0 || items.goose > 0
+  const total = calculateOrderTotal(items, productMap)
+  const hasItems = Object.values(items).some((q) => q > 0)
 
   const suggestions = useMemo(() => {
     if (name.length === 0) return []
@@ -83,9 +84,14 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
     applyCustomerDefaults(s)
   }, [applyCustomerDefaults])
 
-  const setChicken = useCallback((v: number) => setItems((prev) => ({ ...prev, chicken: v })), [])
-  const setDuck = useCallback((v: number) => setItems((prev) => ({ ...prev, duck: v })), [])
-  const setGoose = useCallback((v: number) => setItems((prev) => ({ ...prev, goose: v })), [])
+  const setQty = useCallback((key: string, v: number) => {
+    setItems((prev) => {
+      const next = { ...prev }
+      if (v <= 0) delete next[key]
+      else next[key] = v
+      return next
+    })
+  }, [])
 
   const handleSubmit = () => {
     if (!name.trim() || !hasItems) return
@@ -170,27 +176,22 @@ export default function OrderForm({ sundayDate, editingOrder, onClose }: Props) 
           <div>
             <label className="block text-sm font-medium text-wood mb-1">Quantities</label>
             <div className="bg-white rounded-lg border border-wood/10 px-3 divide-y divide-wood/10">
-              <QuantityStepper
-                label="Rainbow Chicken Eggs"
-                emoji={'\u{1F414}'}
-                price={PRICES.chicken}
-                value={items.chicken}
-                onChange={setChicken}
-              />
-              <QuantityStepper
-                label="Duck Eggs"
-                emoji={'\u{1F986}'}
-                price={PRICES.duck}
-                value={items.duck}
-                onChange={setDuck}
-              />
-              <QuantityStepper
-                label="Fertile Goose Eggs"
-                emoji={'\u{1F9A2}'}
-                price={PRICES.goose}
-                value={items.goose}
-                onChange={setGoose}
-              />
+              {activeProducts.map((product) => (
+                <QuantityStepper
+                  key={product.key}
+                  label={product.name}
+                  emoji={product.emoji}
+                  price={product.price}
+                  unit={product.unit}
+                  value={items[product.key] ?? 0}
+                  onChange={(v) => setQty(product.key, v)}
+                />
+              ))}
+              {activeProducts.length === 0 && (
+                <div className="py-4 text-center text-sm text-wood/50 italic">
+                  No products yet — add some in Settings.
+                </div>
+              )}
             </div>
           </div>
 
