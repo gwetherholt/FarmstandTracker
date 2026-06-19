@@ -39,6 +39,14 @@ export function formatSundayLabel(dateStr: string, reference: Date = new Date())
   return `Sunday, ${month} ${day}`
 }
 
+/** Full pickup label for print labels: "Sunday, Jun 22" */
+export function formatPickupDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00')
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const month = date.toLocaleDateString('en-US', { month: 'short' })
+  return `${weekday}, ${month} ${date.getDate()}`
+}
+
 /** Short date for nav: "Mar 22" */
 export function formatShortDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00')

@@ -1,8 +1,22 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Order } from '../types'
 import { useOrdersBySunday, useGenerateRecurring } from '../hooks/useOrders'
 import { useIsClosed, toggleClosed } from '../hooks/useClosedSundays'
 import { useIsSoldOut, toggleSoldOut } from '../hooks/useSoldOut'
+import { useProducts } from '../hooks/useProducts'
+import {
+  generateBatchLabels,
+  renderBatchLabelsCanvas,
+  downloadBlob,
+} from '../utils/labelGenerator'
+import {
+  isWebBluetoothAvailable,
+  connect as connectPrinter,
+  disconnect as disconnectPrinter,
+  isConnected as isPrinterConnected,
+  printImage,
+  setDisconnectListener,
+} from '../utils/phomemoPrinter'
 import { toDateString } from '../utils/dates'
 import PrepSummary from './PrepSummary'
 import OrderCard from './OrderCard'
@@ -23,13 +37,24 @@ function getNextSundayFrom(dateStr: string): string {
 
 export default function SundayBoard({ sundayDate }: Props) {
   const orders = useOrdersBySunday(sundayDate)
+  const products = useProducts()
   const isClosed = useIsClosed(sundayDate)
   const isSoldOut = useIsSoldOut(sundayDate)
   const [formOpen, setFormOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+  const bluetoothAvailable = isWebBluetoothAvailable()
+  const [printerConnected, setPrinterConnected] = useState(() => isPrinterConnected())
+  const [printerBusy, setPrinterBusy] = useState(false)
 
   // Generate recurring orders from previous Sunday on load
   useGenerateRecurring(sundayDate)
+
+  // Reflect printer drop-outs (e.g. powered off, out of range) in the UI.
+  useEffect(() => {
+    if (!bluetoothAvailable) return
+    setDisconnectListener(() => setPrinterConnected(false))
+    return () => setDisconnectListener(null)
+  }, [bluetoothAvailable])
 
   const handleEdit = useCallback((order: Order) => {
     if (isClosed) return
@@ -46,6 +71,50 @@ export default function SundayBoard({ sundayDate }: Props) {
     setEditingOrder(null)
     setFormOpen(true)
   }, [])
+
+  // Orders with at least one item, alphabetical by customer name.
+  const labelOrders = orders
+    .filter((o) => Object.values(o.items).some((qty) => qty > 0))
+    .sort((a, b) => a.customerName.localeCompare(b.customerName))
+
+  const handleDownloadLabels = useCallback(async () => {
+    if (labelOrders.length === 0) return
+    const blob = await generateBatchLabels(labelOrders, products)
+    downloadBlob(blob, `labels-${sundayDate}.png`)
+  }, [labelOrders, products, sundayDate])
+
+  const handleConnectPrinter = useCallback(async () => {
+    setPrinterBusy(true)
+    try {
+      const connected = await connectPrinter()
+      // connected === false means the user dismissed the picker — stay silent.
+      if (connected) setPrinterConnected(true)
+    } catch {
+      setPrinterConnected(false)
+      window.alert('Printer disconnected — try reconnecting')
+    } finally {
+      setPrinterBusy(false)
+    }
+  }, [])
+
+  const handleDisconnectPrinter = useCallback(() => {
+    disconnectPrinter()
+    setPrinterConnected(false)
+  }, [])
+
+  const handlePrintBluetooth = useCallback(async () => {
+    if (labelOrders.length === 0) return
+    setPrinterBusy(true)
+    try {
+      const canvas = renderBatchLabelsCanvas(labelOrders, products)
+      await printImage(canvas)
+    } catch {
+      setPrinterConnected(false)
+      window.alert('Printer disconnected — try reconnecting')
+    } finally {
+      setPrinterBusy(false)
+    }
+  }, [labelOrders, products])
 
   const nextSunday = getNextSundayFrom(sundayDate)
 
@@ -70,7 +139,51 @@ export default function SundayBoard({ sundayDate }: Props) {
       )}
 
       {/* Week controls */}
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-between items-center gap-2">
+        <div className="flex gap-2">
+          {!isClosed && labelOrders.length > 0 && (
+            <>
+              {/* Direct Bluetooth printing — only when Web Bluetooth exists */}
+              {bluetoothAvailable &&
+                (printerConnected ? (
+                  <>
+                    <button
+                      onClick={handlePrintBluetooth}
+                      disabled={printerBusy}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-olive text-cream hover:bg-olive-dark transition-colors touch-manipulation disabled:opacity-50"
+                    >
+                      {'\u{1F5A8}️'} {printerBusy ? 'Printing…' : 'Print Labels'}
+                    </button>
+                    <button
+                      onClick={handleDisconnectPrinter}
+                      disabled={printerBusy}
+                      className="text-xs font-medium px-2 py-1.5 rounded-lg bg-wood/5 text-wood/50 hover:text-wood hover:bg-wood/10 transition-colors touch-manipulation disabled:opacity-50"
+                      title="Disconnect printer"
+                    >
+                      Disconnect
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleConnectPrinter}
+                    disabled={printerBusy}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-olive/10 text-olive-dark hover:bg-olive/20 transition-colors touch-manipulation disabled:opacity-50"
+                  >
+                    {'\u{1F5A8}️'} {printerBusy ? 'Connecting…' : 'Connect Printer'}
+                  </button>
+                ))}
+
+              {/* Always-available PNG download (the only option without BLE) */}
+              <button
+                onClick={handleDownloadLabels}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-olive/10 text-olive-dark hover:bg-olive/20 transition-colors touch-manipulation"
+              >
+                {'\u{1F3F7}️'} {bluetoothAvailable ? 'Download' : 'Print Labels'}
+              </button>
+            </>
+          )}
+        </div>
+        <div className="flex gap-2">
         {!isClosed && (
           <button
             onClick={() => toggleSoldOut(sundayDate, isSoldOut)}
@@ -93,6 +206,7 @@ export default function SundayBoard({ sundayDate }: Props) {
         >
           {isClosed ? 'Reopen this week' : 'Mark as closed'}
         </button>
+        </div>
       </div>
 
       {!isClosed && (

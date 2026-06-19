@@ -1,6 +1,7 @@
 import { memo, useState, useCallback } from 'react'
 import type { Order, ContactSource } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
+import { generateSingleLabel, downloadBlob, slugifyName } from '../utils/labelGenerator'
 import { useProductMap } from '../hooks/useProducts'
 import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
 
@@ -27,6 +28,11 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
     deleteOrder(order.id!)
     setConfirming(false)
   }, [order.id])
+
+  const handleLabel = useCallback(async () => {
+    const blob = await generateSingleLabel(order, Array.from(productMap.values()))
+    downloadBlob(blob, `label-${slugifyName(order.customerName)}-${order.sundayDate}.png`)
+  }, [order, productMap])
 
   const lineEntries = Object.entries(order.items)
     .filter(([, qty]) => qty > 0)
@@ -92,6 +98,14 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
                 </div>
               )}
             </div>
+            <button
+              onClick={handleLabel}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-olive/50 hover:text-olive-dark hover:bg-olive/10 transition-colors touch-manipulation"
+              aria-label="Download label"
+              title="Download label PNG"
+            >
+              {'\u{1F3F7}️'}
+            </button>
             <button
               onClick={() => setConfirming(true)}
               className="w-9 h-9 flex items-center justify-center rounded-lg text-barn/40 hover:text-barn hover:bg-barn/10 transition-colors touch-manipulation"
