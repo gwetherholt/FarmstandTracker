@@ -129,7 +129,7 @@ function canvasToRaster(canvas: HTMLCanvasElement): Uint8Array<ArrayBuffer> {
   // Build the command stream: init, then one GS v 0 raster command per band,
   // then a paper feed at the end.
   const bands = Math.ceil(height / BAND_HEIGHT)
-  const HEADER = 2 // ESC @
+  const HEADER = 10 // ESC @ (2) + ESC 7 heat (5) + GS | density (3)
   const FEED = 3 // ESC d n
   const total =
     HEADER + bands * 8 + bitmap.length + FEED
@@ -139,6 +139,19 @@ function canvasToRaster(canvas: HTMLCanvasElement): Uint8Array<ArrayBuffer> {
   // ESC @  — initialize printer
   out[o++] = 0x1b
   out[o++] = 0x40
+
+  // ESC 7 n1 n2 n3  — set heat: max dots, heat time, heat interval. A longer
+  // heat time (0x80) burns each dot darker.
+  out[o++] = 0x1b
+  out[o++] = 0x37
+  out[o++] = 0x07
+  out[o++] = 0x80
+  out[o++] = 0x02
+
+  // GS | n  — set print density to max (0x08) for the darkest output.
+  out[o++] = 0x1d
+  out[o++] = 0x7c
+  out[o++] = 0x08
 
   for (let yStart = 0; yStart < height; yStart += BAND_HEIGHT) {
     const bandHeight = Math.min(BAND_HEIGHT, height - yStart)
