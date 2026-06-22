@@ -23,8 +23,9 @@ const BYTES_PER_ROW = PRINTER_WIDTH / 8 // 48
 // Max raster rows per GS v 0 command — large images are split into bands so we
 // never overflow the printer's buffer.
 const BAND_HEIGHT = 255
-// BLE write chunk size. Chrome/Android negotiates a large MTU; 512 is safe.
-const CHUNK_SIZE = 512
+// BLE write chunk size. Smaller chunks (128) slow transmission, which gives the
+// print head time to apply heat more consistently.
+const CHUNK_SIZE = 128
 
 // Module-level singletons so a reconnect within the same session can skip the
 // device picker.
@@ -120,7 +121,7 @@ function canvasToRaster(canvas: HTMLCanvasElement): Uint8Array<ArrayBuffer> {
         alpha === 0
           ? 255
           : 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
-      if (lum < 128) {
+      if (lum < 200) {
         bitmap[y * BYTES_PER_ROW + (x >> 3)] |= 0x80 >> (x & 7)
       }
     }
