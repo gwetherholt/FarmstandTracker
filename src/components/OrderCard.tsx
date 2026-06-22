@@ -1,7 +1,13 @@
 import { memo, useState, useCallback } from 'react'
 import type { Order, ContactSource } from '../types'
 import { calculateOrderTotal } from '../utils/pricing'
-import { generateSingleLabel, downloadBlob, slugifyName } from '../utils/labelGenerator'
+import {
+  generateSingleLabel,
+  renderSingleLabelCanvas,
+  downloadBlob,
+  slugifyName,
+} from '../utils/labelGenerator'
+import { isConnected as isPrinterConnected, printImage } from '../utils/phomemoPrinter'
 import { useProductMap } from '../hooks/useProducts'
 import { togglePickedUp, deleteOrder, toggleRecurring } from '../hooks/useOrders'
 
@@ -30,8 +36,29 @@ export default memo(function OrderCard({ order, onEdit }: Props) {
   }, [order.id])
 
   const handleLabel = useCallback(async () => {
-    const blob = await generateSingleLabel(order, Array.from(productMap.values()))
-    downloadBlob(blob, `label-${slugifyName(order.customerName)}-${order.sundayDate}.png`)
+    const products = Array.from(productMap.values())
+
+    // If the shared printer connection (managed by SundayBoard) is live, print
+    // this order's labels directly; otherwise fall back to a PNG download.
+    if (isPrinterConnected()) {
+      const canvases = renderSingleLabelCanvas(order, products)
+      try {
+        for (const canvas of canvases) {
+          await printImage(canvas)
+        }
+      } catch {
+        window.alert('Printer disconnected — try reconnecting')
+      }
+      return
+    }
+
+    // One label per carton (half-dozen), so an order may yield several PNGs.
+    const blobs = await generateSingleLabel(order, products)
+    const base = `label-${slugifyName(order.customerName)}-${order.sundayDate}`
+    blobs.forEach((blob, i) => {
+      const suffix = blobs.length > 1 ? `-${i + 1}` : ''
+      downloadBlob(blob, `${base}${suffix}.png`)
+    })
   }, [order, productMap])
 
   const lineEntries = Object.entries(order.items)
